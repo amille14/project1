@@ -1,12 +1,8 @@
-require "util/class"
+class = require "util/middleclass"
 
-physicsBody = createClass()
+PhysicsBody = class("PhysicsBody")
 
-function PhysicsBody:new(o, w, h, x, y, mass, friction, airDrag, gravity, restitution, grounded)
-  o = o or {}
-  setmetatable(o, self)
-  self.__index = self
-
+function PhysicsBody:initialize(world, w, h, x, y, mass, friction, airDrag, gravity, restitution)
   -- Width & height
   self.w = w
   self.h = h
@@ -19,15 +15,16 @@ function PhysicsBody:new(o, w, h, x, y, mass, friction, airDrag, gravity, restit
   self.ax = 0
   self.ay = 0
 
-  -- Other imporant values
+  -- Other values
   self.mass = mass or 1
   self.friction = friction or 0
   self.airDrag = airDrag or 0
-  self.gravity = gravity or 9.81
+  self.gravity = gravity or 9.81 * 32
   self.restitution = restitution or 0  -- "Bounciness", should be a number between 0 and -1
-  self.grounded = grounded or true
+  self.grounded = false
 
-  return o
+    -- Add object to bump world
+  world:add(self, self.x, self.y, self.w, self.h)
 end
 
 function PhysicsBody:updatePhysics(dt)
@@ -37,40 +34,40 @@ function PhysicsBody:updatePhysics(dt)
   fy = self.mass * self.gravity
 
   -- Friction force
-  if grounded then
-    if fx > 0 then
-      fx = fx - self.friction * self.mass
-    else
-      fx = fx + self.friction * self.mass
-    end
+  if self.grounded then
+    self.vx = self.vx * (1 - math.min(self.friction * self.mass * dt, 1))
 
   -- Air drag force
   else
-    if fx > 0 then
-      fx = fx - 0.5 * self.airDrag * self.h * self.vx * self.vx
-    else
-      fx = fx + 0.5 * self.airDrag * self.h * self.vx * self.vx
-    end
-
-    if fy > 0 then
-      fy = fy - 0.5 * self.airDrag * self.w * self.vy * self.vy
-    else
-      fy = fy + 0.5 * self.airDrag * self.w * self.vy * self.vy
-    end
+    self.vx = self.vx * (1 - math.min(self.airDrag * self.mass * dt, 1))
+    self.vy = self.vy * (1 - math.min(self.airDrag * self.mass * dt, 1))
   end
 
   -- Position and velocity along the X axis
   local px = self.vx * dt + (0.5 * self.ax * dt * dt)
-  self.x = self.x + px * 32  -- 1 meter = 32 pixels
+  self.x = self.x + px * 64  -- 1 meter = 64 pixels
   local axNew = fx / self.mass
   local axAvg = 0.5 * (axNew + self.ax)
   self.vx = self.vx + axAvg * dt
+  self.ax = axAvg
+  if math.abs(self.ax) < 0.0001 then self.ax = 0 end
 
   -- Position and velocity along the Y axis
   local py = self.vy * dt + (0.5 * self.ay * dt * dt)
-  self.y = self.y + py * 32  -- 1 meter = 32 pixels
+  self.y = self.y + py * 64  -- 1 meter = 64 pixels
   local ayNew = fy / self.mass
   local ayAvg = 0.5 * (ayNew + self.ay)
   self.vy = self.vy + ayAvg * dt
-    
+  self.ay = ayAvg
+  if math.abs(self.ay) < 0.0001 then self.ax = 0 end
+end
+
+function PhysicsBody:applyForce(fx, fy)
+  self.ax = self.ax + fx / self.mass
+  self.ay = self.ay + fy / self.mass
+end
+
+function PhysicsBody:applyImpulse(ix, iy)
+  self.vx = self.vx + ix
+  self.vy = self.vy + iy
 end

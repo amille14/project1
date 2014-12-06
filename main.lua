@@ -13,7 +13,7 @@ function love.load()
   world = bump.newWorld(64)
 
   --Load Objects
-  player = Player:new(nil, world, 128, 128)
+  player = Player:new(world, 128, 128)
   -- ground = {}
   -- ground.body = love.physics.newBody(world, 650/2, 650-50/2, "static")
   -- ground.shape = love.physics.newRectangleShape(650, 50)
@@ -23,11 +23,11 @@ end
 
 function love.keyreleased(key)
   if key == " " then
-    player:attackReleased()
+    player:releaseAttack()
   end
 
   if key == "up" then
-    player:jumpReleased()
+    player:releaseJump()
   end
 end
 
@@ -39,8 +39,7 @@ end
 function love.draw()
   --Draw ground
   love.graphics.setColor(72, 160, 14)
-  -- x1, y1, x2, y2, x3, y3, x4, y4 = ground.body:getWorldPoints(ground.shape:getPoints())
-  -- love.graphics.polygon("fill", x1, y1 + 50, x2, y2 + 50, x3, y3 + 50, x4, y4 + 50)
+  love.graphics.polygon("fill", 0, 600, 0, 768, 1080, 768, 1080, 600)
 
   --Draw player
   love.graphics.setColor(255, 255, 255)

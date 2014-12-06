@@ -1,45 +1,23 @@
-require "util/class"
-require "physics_body"
+class = require "util/middleclass"
 anim8 = require "util/anim8"
 bump = require "util/bump"
+require "physics_body"
 
-Player = createClass("PhysicsBody")
+Player = class("Player", PhysicsBody)
 local attackEnded = false
-local gravity = 9.81
-local friction = 10
-local airDamping = 6
-local maxJumpTime = 28
-local jumpTime = maxJumpTime
-local jumpConstant = 0.5
 
-function Player:new (o, world, x, y)
-  o = o or {}
-  setmetatable(o, self)
-  self.__index = self
-
-  -- Initialize variables
-  -- self.body = love.physics.newBody(world, x, y, "dynamic")
-  -- self.shape = love.physics.newRectangleShape(64, 64)
-  -- self.fixture = love.physics.newFixture(self.body, self.shape, 1)
-  -- self.fixture:setUserData("player")
+function Player:initialize(world, x, y)
+  PhysicsBody.initialize(self, world, 64, 64, x, y, 40, 0.5, 0.08, 9.81 * 12, 0, false)
 
   self.state = "idle"
   self.direction = "right"
-  self.grounded = true
-
-  self.x = x
-  self.y = y
-  self.width = 64
-  self.height = 64
-  self.mass = 8
-  self.speed = 80
-  self.velX = 0
-  self.velY = 0
-  self.accX = 0
-  self.accY = gravity * self.mass
-
-  -- Add player to bump world
-  world:add(self, self.x, self.y, self.width, self.height)
+  self.speed = 180
+  self.airSpeed = 0.22  -- Coefficient of air speed
+  self.jumpTime = 0
+  self.maxJumpTime = 80 -- In milliseconds
+  self.jumpReleased = true
+  self.chargeTime = 0
+  self.maxChargeTime = 1000
 
   -- Load spritesheets & create animations
   self.images = {
@@ -63,111 +41,114 @@ function Player:new (o, world, x, y)
         attackEnded = true
       end)
   }
-
-  return o
 end
 
-function Player:attackReleased()
+function Player:releaseAttack()
   self.state = "attacking"
 end
 
-function Player:jumpReleased()
-  if not self.grounded and self.velY > 0 then
-    self.velY = self.velY * 0.5
+function Player:releaseJump()
+  self.jumpReleased = true
+end
+
+function Player:move(dt)
+  -- Vertical movement
+  if love.keyboard.isDown("up") then
+    if self.grounded and self.jumpReleased then
+      self:applyImpulse(0, -7)
+      self.grounded = false
+      self.jumpReleased = false
+
+    elseif not self.grounded and self.jumpTime > 0 and not self.jumpReleased then
+      self:applyImpulse(0, -6)
+      self.jumpTime = self.jumpTime - dt * 1000
+    end
+  end
+
+  -- Horizontal movement
+  if love.keyboard.isDown("right") then
+    self.direction = "right"
+    self.state = "walking"
+    if self.state ~= "walking" then stateChanged = true end
+    
+    if self.grounded then
+      if self.vx < self.speed then self.vx = self.vx + self.speed * dt end
+    else
+      if self.vx < self.speed * self.airSpeed then self.vx = self.vx + self.speed * self.airSpeed * dt end
+    end
+
+  elseif love.keyboard.isDown("left") then
+    self.direction = "left"
+    self.state = "walking"
+    if self.state ~= "walking" then stateChanged = true end
+    
+    if self.grounded then
+      if self.vx > -self.speed then self.vx = self.vx - self.speed * dt end
+    else
+      if self.vx > -self.speed * self.airSpeed then self.vx = self.vx - self.speed * self.airSpeed * dt end
+    end
+
+  else
+    if self.state ~= "idle" then stateChanged = true end
+    self.state = "idle"
   end
 end
 
 function Player:update (dt)
-  -- local stateChanged = false
+  local stateChanged = false
 
-  -- if attackEnded then
-  --   self.state = "idle"
-  --   attackEnded = false
-  -- end
-
-  -- if self.state ~= "attacking" then
-  --   if love.keyboard.isDown(" ") then
-  --     if self.state ~= "chargingAttack" then stateChanged = true end
-  --     if stateChanged then
-  --       self.animations["attacking"]:gotoFrame(1)
-  --       self.animations["attacking"]:resume()
-  --     end
-  --     self.state = "chargingAttack"
-  --   end
-
-  --   if self.state ~= "chargingAttack" then
-  --     if love.keyboard.isDown("right") then
-  --       -- self.body:applyForce(200, 0)
-  --       if self.state ~= "walking" then stateChanged = true end
-  --       self.state = "walking"
-  --       self.direction = "right"
-
-  --     elseif love.keyboard.isDown("left") then
-  --       -- self.body:applyForce(-200, 0)
-  --       if self.state ~= "walking" then stateChanged = true end
-  --       self.state = "walking"
-  --       self.direction = "left"
-
-  --     else
-  --       if self.state ~= "idle" then stateChanged = true end
-  --       self.state = "idle"
-  --     end
-  --   end
-  -- end
-
-  -- if love.keyboard.isDown("up") and self.grounded then
-  --   -- self.body:applyLinearImpulse(0, -10)
-  -- end
-
-  -- Horizontal Movement
-  if love.keyboard.isDown("right") then
-    self.state = "walking"
-    self.direction = "right"
-    if self.velX < self.speed then self.velX = self.velX + self.speed * dt end
-
-  elseif love.keyboard.isDown("left") then
-    self.state = "walking"
-    self.direction = "left"
-    if self.velX > -self.speed then self.velX = self.velX - self.speed * dt end
-
-  else
+  -- Reset attack
+  if attackEnded then
     self.state = "idle"
+    attackEnded = false
+    self.chargeTime = 0
   end
 
-  -- Vertical Movement
-  if love.keyboard.isDown("up") then
-    -- if jumpTime > 0 then
-    --   grounded = false
-    --   jumpTime = jumpTime - dt * 100
-    --   self.velY = -jumpTime * jumpConstant
-    -- end
-    
-    self.grounded = false
-    self.velY = self.velY - 300 * dt
+  if self.state ~= "attacking" then
+
+    -- Charge attack
+    if love.keyboard.isDown(" ") then
+      if self.state ~= "chargingAttack" then stateChanged = true end
+      if stateChanged then
+        self.animations["attacking"]:gotoFrame(1)
+        self.animations["attacking"]:resume()
+      end
+      self.state = "chargingAttack"
+
+      self.chargeTime = self.chargeTime + dt * 1000
+    end
+
+    -- Movement
+    if self.state ~= "chargingAttack" then
+      self:move(dt)
+    end
   end
 
-  -- Update position
-  self.velX = self.velX + self.accX * dt
-  self.velY = self.velY + self.accY * dt
-  if grounded then self.velX = self.velX * (1 - math.min(dt * friction, 1)) end  -- Friction
-  if not grounded then self.velX = self.velX * (1 - math.min(dt * airDamping, 1)) end  -- Air Damping
-  self.x = self.x + self.velX
-  self.y = self.y + self.velY
+  -- Update physics
+  self:updatePhysics(dt)
 
-  print(self.velY)
-  -- print(jumpTime)
-
+  -- Collision detection
   if self.y > 600 then
     self.y = 600
-    self.velY = 0
+    self.vy = 0
     self.grounded = true
-    jumpTime = maxJumpTime
+    self.jumpTime = self.maxJumpTime
   end
 
   -- Update animation
   self.currentAnim = self.animations[self.state]
   if stateChanged then self.currentAnim:gotoFrame(1) end
   self.currentAnim:update(dt)
+
+  -- Attack self-knockback
+  if self.state == "attacking" and self.currentAnim.position == 4 and self.chargeTime > 200 then
+    if self.direction == "right" then
+      self:applyForce(-self.chargeTime * 10, 0)
+    else
+      self:applyForce(self.chargeTime * 10, 0)
+    end
+  end
+  if self.chargeTime > self.maxChargeTime then self:releaseAttack() end
 end
 
 
@@ -185,6 +166,4 @@ function Player:draw ()
   end
 
   self.currentAnim:draw(self.images[self.state], self.x, self.y, 0, sx, sy, ox, oy)
-
-  -- self.currentAnim:draw(self.images[self.state], self.body:getX(), self.body:getY(), 0, sx, sy, ox, oy)
 end
