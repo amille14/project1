@@ -1,5 +1,3 @@
-class = require "util/middleclass"
-anim8 = require "util/anim8"
 require "physics_body"
 
 Player = class("Player", PhysicsBody)
@@ -13,10 +11,10 @@ function Player:initialize(world, x, y)
   self.speed = 180
   self.airSpeed = 0.20  -- Coefficient of air speed
   self.jumpTime = 0
-  self.maxJumpTime = 80 -- In milliseconds
+  self.maxJumpTime = 80 -- in milliseconds
   self.jumpReleased = true
   self.chargeTime = 0
-  self.maxChargeTime = 1000
+  self.maxChargeTime = 1000 -- in milliseconds
 
   -- Add object to bump world
   world:add(self, self.x, self.y, self.w, self.h)
@@ -45,6 +43,9 @@ function Player:initialize(world, x, y)
   }
 end
 
+
+-- Movement
+------------------------------------
 function Player:releaseAttack()
   self.state = "attacking"
 end
@@ -54,7 +55,7 @@ function Player:releaseJump()
 end
 
 function Player:move(dt)
-  -- Vertical movement
+  -- Jumping
   if love.keyboard.isDown("up") then
     if self.grounded and self.jumpReleased then
       self:applyImpulse(0, -7)
@@ -96,6 +97,38 @@ function Player:move(dt)
   end
 end
 
+
+-- Collisions
+------------------------------------
+function Player:handleCollisions()
+  local x, y, cols, len = world:move(self, self.x, self.y, playerCollisionFilter)
+  self.x, self.y = x, y
+
+  if len > 0 then
+    for _, v in ipairs(cols) do
+      if v.other:typeOf("Block") then
+        if v.normal.x == 0 and v.normal.y == -1 then
+          self.grounded = true
+          self.vy = 0
+          self.jumpTime = self.maxJumpTime
+        elseif v.normal.x == 0 and v.normal.y == 1 then
+          self.vy = -self.vy * self.restitution
+        end
+      end
+    end
+  end
+end
+
+local playerCollisionFilter = function(other)
+  if other:typeOf("Block") then
+    return "slide"
+  end
+end
+
+
+
+-- Update & Draw
+------------------------------------
 function Player:update (dt)
   local stateChanged = false
 
@@ -131,11 +164,9 @@ function Player:update (dt)
 
   -- Collision detection
   self:handleCollisions()
-
   if self.grounded then  
     self.jumpTime = self.maxJumpTime
   end
-
 
   -- Update animation
   self.currentAnim = self.animations[self.state]
@@ -153,26 +184,8 @@ function Player:update (dt)
   -- if self.chargeTime > self.maxChargeTime then self:releaseAttack() end
 end
 
-function Player:handleCollisions()
-  local x, y, cols, len = world:check(self, self.x, self.y, playerCollisionFilter)
-  self.x, self.y = x, y
-  if len > 0 then
-    for i, v in ipairs(cols) do
-      if v.other.isGround and v.normal.x == 0 and v.normal.y == -1 then
-        self.grounded = true
-        self.vy = 0
-        self.jumpTime = self.maxJumpTime
-      end
-    end
-  end
-end
-
-local playerCollisionFilter = function(other)
-  if other.isGround then return "slide" end
-end
-
 function Player:draw ()
-  local sx, sy, ox, oy = 3, 3, 0, 0
+  local sx, sy, ox, oy = 2, 2, 0, 0
 
   if self.direction == "right" then
     self.currentAnim.flippedH = false
@@ -185,4 +198,5 @@ function Player:draw ()
   end
 
   self.currentAnim:draw(self.images[self.state], self.x, self.y, 0, sx, sy, ox, oy)
+  self:drawOutline()
 end

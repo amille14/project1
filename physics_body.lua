@@ -1,6 +1,5 @@
-class = require "util/middleclass"
-
 PhysicsBody = class("PhysicsBody")
+PhysicsBody:include(Corners)
 
 function PhysicsBody:initialize(w, h, x, y, mass, friction, airDrag, gravity, restitution)
   -- Width & height
@@ -40,25 +39,28 @@ function PhysicsBody:updatePhysics(dt)
     self.vy = self.vy * (1 - math.min(self.airDrag * self.mass * dt, 1))
   end
 
-  -- Position and velocity along the X axis
+  -- Calculate position, velocity, and acceleration along the X axis
   local px = self.vx * dt + (0.5 * self.ax * dt * dt)
   self.x = self.x + px * 64  -- 1 meter = 64 pixels
   local axNew = fx / self.mass
   local axAvg = 0.5 * (axNew + self.ax)
   self.vx = self.vx + axAvg * dt
   self.ax = axAvg
-  if math.abs(self.ax) < 0.0001 then self.ax = 0 end
+  if math.abs(self.ax) < 0.001 then self.ax = 0 end
 
-  -- Position and velocity along the Y axis
+  -- Calculate position, velocity, and acceleration along the Y axis
   local py = self.vy * dt + (0.5 * self.ay * dt * dt)
   self.y = self.y + py * 64  -- 1 meter = 64 pixels
   local ayNew = fy / self.mass
   local ayAvg = 0.5 * (ayNew + self.ay)
   self.vy = self.vy + ayAvg * dt
   self.ay = ayAvg
-  if math.abs(self.ay) < 0.0001 then self.ax = 0 end
+  if math.abs(self.ay) < 0.001 then self.ax = 0 end
 end
 
+
+-- Apply forces
+-------------------------------------
 function PhysicsBody:applyForce(fx, fy)
   self.ax = self.ax + fx / self.mass
   self.ay = self.ay + fy / self.mass
