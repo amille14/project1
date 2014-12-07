@@ -1,23 +1,25 @@
 class = require "util/middleclass"
 anim8 = require "util/anim8"
-bump = require "util/bump"
 require "physics_body"
 
 Player = class("Player", PhysicsBody)
 local attackEnded = false
 
 function Player:initialize(world, x, y)
-  PhysicsBody.initialize(self, world, 64, 64, x, y, 40, 0.5, 0.08, 9.81 * 12, 0, false)
+  PhysicsBody.initialize(self, 64, 64, x, y, 40, 0.5, 0.1, 9.81 * 7, 0, false)
 
   self.state = "idle"
   self.direction = "right"
   self.speed = 180
-  self.airSpeed = 0.22  -- Coefficient of air speed
+  self.airSpeed = 0.20  -- Coefficient of air speed
   self.jumpTime = 0
   self.maxJumpTime = 80 -- In milliseconds
   self.jumpReleased = true
   self.chargeTime = 0
   self.maxChargeTime = 1000
+
+  -- Add object to bump world
+  world:add(self, self.x, self.y, self.w, self.h)
 
   -- Load spritesheets & create animations
   self.images = {
@@ -128,12 +130,12 @@ function Player:update (dt)
   self:updatePhysics(dt)
 
   -- Collision detection
-  if self.y > 600 then
-    self.y = 600
-    self.vy = 0
-    self.grounded = true
+  self:handleCollisions()
+
+  if self.grounded then  
     self.jumpTime = self.maxJumpTime
   end
+
 
   -- Update animation
   self.currentAnim = self.animations[self.state]
@@ -141,19 +143,36 @@ function Player:update (dt)
   self.currentAnim:update(dt)
 
   -- Attack self-knockback
-  if self.state == "attacking" and self.currentAnim.position == 4 and self.chargeTime > 200 then
-    if self.direction == "right" then
-      self:applyForce(-self.chargeTime * 10, 0)
-    else
-      self:applyForce(self.chargeTime * 10, 0)
-    end
-  end
-  if self.chargeTime > self.maxChargeTime then self:releaseAttack() end
+  -- if self.state == "attacking" and self.currentAnim.position == 4 and self.chargeTime > 200 then
+  --   if self.direction == "right" then
+  --     self:applyForce(-self.chargeTime * 10, 0)
+  --   else
+  --     self:applyForce(self.chargeTime * 10, 0)
+  --   end
+  -- end
+  -- if self.chargeTime > self.maxChargeTime then self:releaseAttack() end
 end
 
+function Player:handleCollisions()
+  local x, y, cols, len = world:check(self, self.x, self.y, playerCollisionFilter)
+  self.x, self.y = x, y
+  if len > 0 then
+    for i, v in ipairs(cols) do
+      if v.other.isGround and v.normal.x == 0 and v.normal.y == -1 then
+        self.grounded = true
+        self.vy = 0
+        self.jumpTime = self.maxJumpTime
+      end
+    end
+  end
+end
+
+local playerCollisionFilter = function(other)
+  if other.isGround then return "slide" end
+end
 
 function Player:draw ()
-  local sx, sy, ox, oy = 2, 2, 0, 0
+  local sx, sy, ox, oy = 3, 3, 0, 0
 
   if self.direction == "right" then
     self.currentAnim.flippedH = false

@@ -2,7 +2,7 @@ class = require "util/middleclass"
 
 PhysicsBody = class("PhysicsBody")
 
-function PhysicsBody:initialize(world, w, h, x, y, mass, friction, airDrag, gravity, restitution)
+function PhysicsBody:initialize(w, h, x, y, mass, friction, airDrag, gravity, restitution)
   -- Width & height
   self.w = w
   self.h = h
@@ -22,9 +22,6 @@ function PhysicsBody:initialize(world, w, h, x, y, mass, friction, airDrag, grav
   self.gravity = gravity or 9.81 * 32
   self.restitution = restitution or 0  -- "Bounciness", should be a number between 0 and -1
   self.grounded = false
-
-    -- Add object to bump world
-  world:add(self, self.x, self.y, self.w, self.h)
 end
 
 function PhysicsBody:updatePhysics(dt)
