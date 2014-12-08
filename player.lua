@@ -4,7 +4,7 @@ Player = class("Player", PhysicsBody)
 local attackEnded = false
 
 function Player:initialize(world, x, y)
-  PhysicsBody.initialize(self, 64, 64, x, y, 40, 0.5, 0.1, 9.81 * 7, 0, false)
+  PhysicsBody.initialize(self, 32, 48, x, y, 40, 0.5, 0.1, 9.81 * 7, 0, false)
 
   self.state = "idle"
   self.direction = "right"
@@ -16,7 +16,7 @@ function Player:initialize(world, x, y)
   self.chargeTime = 0
   self.maxChargeTime = 1000 -- in milliseconds
 
-  -- Add object to bump world
+  -- Add body to bump world
   world:add(self, self.x, self.y, self.w, self.h)
 
   -- Load spritesheets & create animations
@@ -105,7 +105,7 @@ function Player:handleCollisions()
   self.x, self.y = x, y
 
   if len > 0 then
-    for _, v in ipairs(cols) do
+    for i, v in ipairs(cols) do
       if v.other:typeOf("Block") then
         if v.normal.x == 0 and v.normal.y == -1 then
           self.grounded = true
@@ -184,8 +184,13 @@ function Player:update (dt)
   -- if self.chargeTime > self.maxChargeTime then self:releaseAttack() end
 end
 
+
 function Player:draw ()
   local sx, sy, ox, oy = 2, 2, 0, 0
+  local drawOffset = {
+    x = -16,
+    y = -16
+  }
 
   if self.direction == "right" then
     self.currentAnim.flippedH = false
@@ -197,6 +202,6 @@ function Player:draw ()
     ox = 16
   end
 
-  self.currentAnim:draw(self.images[self.state], self.x, self.y, 0, sx, sy, ox, oy)
-  self:drawOutline()
+  self.currentAnim:draw(self.images[self.state], self.x + drawOffset.x, self.y + drawOffset.y, 0, sx, sy, ox, oy)
+  -- self:drawOutline()
 end
