@@ -30,14 +30,14 @@ function PhysicsBody:updatePhysics(dt)
   fy = self.mass * self.gravity
 
   -- Friction force
-  if self.grounded then
-    self.vx = self.vx * (1 - math.min(self.friction * self.mass * dt, 1))
+  -- if self.grounded then
+  --   self.vx = self.vx * (1 - math.min(self.friction * self.mass * dt, 1))
 
-  -- Air drag force
-  else
-    self.vx = self.vx * (1 - math.min(self.airDrag * self.mass * dt, 1))
-    self.vy = self.vy * (1 - math.min(self.airDrag * self.mass * dt, 1))
-  end
+  -- -- Air drag force
+  -- else
+  --   self.vx = self.vx * (1 - math.min(self.airDrag * self.mass * dt, 1))
+  --   self.vy = self.vy * (1 - math.min(self.airDrag * self.mass * dt, 1))
+  -- end
 
   -- Calculate position, velocity, and acceleration along the X axis
   local px = self.vx * dt + (0.5 * self.ax * dt * dt)

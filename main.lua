@@ -65,6 +65,13 @@ end
 
 function love.update(dt)
   player:update(dt)
+
+  -- Make camera smooth-follow the player 
+  if distance(player.x, player.y, cam.x, cam.y) > 64 then
+    flux.to(cam, 0.6, {x = player.x, y = player.y}):ease("quadout")
+  end
+  flux.update(dt)
+
   cam:lookAt(player.x, player.y)
 end
 
@@ -87,4 +94,8 @@ function love.draw()
 
   --FPS
   love.graphics.print("FPS: " .. love.timer.getFPS(), 2, 2)
+end
+
+function distance(x1, y1, x2, y2)
+  return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
 end

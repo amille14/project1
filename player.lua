@@ -8,7 +8,7 @@ function Player:initialize(world, x, y)
 
   self.state = "idle"
   self.direction = "right"
-  self.speed = 180
+  self.speed = 30 -- 160
   self.airSpeed = 0.20  -- Coefficient of air speed
   self.jumpTime = 0
   self.maxJumpTime = 80 -- in milliseconds
@@ -21,24 +21,36 @@ function Player:initialize(world, x, y)
 
   -- Load spritesheets & create animations
   self.images = {
-    ["idle"] = love.graphics.newImage("images/player/idle-right.png"),
-    ["walking"] = love.graphics.newImage("images/player/walking-right.png"),
-    ["chargingAttack"] = love.graphics.newImage("images/player/attacking-right.png"),
-    ["attacking"] = love.graphics.newImage("images/player/attacking-right.png")
+    ["idle"] = love.graphics.newImage("images/player/idle.png"),
+    ["walking"] = love.graphics.newImage("images/player/walking.png"),
+    ["jumping"] = love.graphics.newImage("images/player/jumping.png"),
+    ["falling"] = love.graphics.newImage("images/player/falling.png"),
+    ["chargingAttack"] = love.graphics.newImage("images/player/attacking.png"),
+    ["attacking"] = love.graphics.newImage("images/player/attacking.png"),
+    ["airStabbing"] = love.graphics.newImage("images/player/air-stab.png")
   }
   self.frames = {
     ["idle"] = anim8.newGrid(32, 32, self.images["idle"]:getWidth(), self.images["idle"]:getHeight()),
     ["walking"] = anim8.newGrid(32, 32, self.images["walking"]:getWidth(), self.images["walking"]:getHeight()),
-    ["attacking"] = anim8.newGrid(64, 48, self.images["attacking"]:getWidth(), self.images["attacking"]:getHeight())
+    ["jumping"] = anim8.newGrid(32, 32, self.images["jumping"]:getWidth(), self.images["jumping"]:getHeight()),
+    ["falling"] = anim8.newGrid(32, 32, self.images["falling"]:getWidth(), self.images["falling"]:getHeight()),
+    ["attacking"] = anim8.newGrid(64, 48, self.images["attacking"]:getWidth(), self.images["attacking"]:getHeight()),
+    ["airStabbing"] = anim8.newGrid(64, 48, self.images["airStabbing"]:getWidth(), self.images["airStabbing"]:getHeight())
   }
   self.animations = {
     ["idle"] = anim8.newAnimation(self.frames["idle"]('1-2', 1), {0.6, 0.4}),
-    ["walking"] = anim8.newAnimation(self.frames["walking"]('1-4', 1), 0.1),
+    ["walking"] = anim8.newAnimation(self.frames["walking"]('1-4', 1), 0.14),
+    ["jumping"] = anim8.newAnimation(self.frames["jumping"]('1-1', 1), 0.1),
+    ["falling"] = anim8.newAnimation(self.frames["falling"]('1-2', 1), {0.15, 0.1}),
     ["chargingAttack"] = anim8.newAnimation(self.frames["attacking"]('1-1', 1), 0.1),
     ["attacking"] = anim8.newAnimation(self.frames["attacking"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3},
       function(anim, loops)
         anim:pauseAtEnd()
         attackEnded = true
+      end),
+    ["airStabbing"] = anim8.newAnimation(self.frames["airStabbing"]('1-3', 1), {0.1, 0.04, 0.3},
+      function(anim, loops)
+        anim:pauseAtEnd()
       end)
   }
 end
@@ -71,7 +83,7 @@ function Player:move(dt)
   -- Horizontal movement
   if love.keyboard.isDown("right") then
     self.direction = "right"
-    self.state = "walking"
+    if self.grounded then self.state = "walking" end
     if self.state ~= "walking" then stateChanged = true end
     
     if self.grounded then
@@ -82,7 +94,7 @@ function Player:move(dt)
 
   elseif love.keyboard.isDown("left") then
     self.direction = "left"
-    self.state = "walking"
+    if self.grounded then self.state = "walking" end
     if self.state ~= "walking" then stateChanged = true end
     
     if self.grounded then
@@ -91,9 +103,17 @@ function Player:move(dt)
       if self.vx > -self.speed * self.airSpeed then self.vx = self.vx - self.speed * self.airSpeed * dt end
     end
 
-  else
+  elseif self.grounded then
     if self.state ~= "idle" then stateChanged = true end
     self.state = "idle"
+  end
+
+  if not self.grounded and self.state ~= "airStabbing" then
+    if self.vy < 6 then
+      self.state = "jumping"
+    else
+      self.state = "falling"
+    end
   end
 end
 
@@ -141,8 +161,17 @@ function Player:update (dt)
 
   if self.state ~= "attacking" then
 
+    -- Air Stab
+    if love.keyboard.isDown("down") and not self.grounded then
+      if self.state ~= "airStabbing" then stateChanged = true end
+      if stateChanged then
+        self.animations["airStabbing"]:gotoFrame(1)
+        self.animations["airStabbing"]:resume()
+      end
+      self.state = "airStabbing"
+    
     -- Charge attack
-    if love.keyboard.isDown(" ") then
+    elseif love.keyboard.isDown(" ") then
       if self.state ~= "chargingAttack" then stateChanged = true end
       if stateChanged then
         self.animations["attacking"]:gotoFrame(1)
@@ -198,10 +227,10 @@ function Player:draw ()
     self.currentAnim.flippedH = true
   end
 
-  if self.state == "attacking" or self.state == "chargingAttack" then
+  if self.state == "attacking" or self.state == "chargingAttack" or self.state == "airStabbing" then
     ox = 16
   end
 
   self.currentAnim:draw(self.images[self.state], self.x + drawOffset.x, self.y + drawOffset.y, 0, sx, sy, ox, oy)
-  -- self:drawOutline()
+  self:drawOutline()
 end
