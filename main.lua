@@ -18,25 +18,24 @@ require "mixins/corners"
 require "player"
 require "block"
 
-
 function love.load()
   love.graphics.setBackgroundColor(0, 100, 100)
   love.graphics.setDefaultFilter("nearest", "nearest")
   love.math.setRandomSeed(os.time())
 
-  --Create camera
-  cam = camera(128, 128)
-
   --Create bump world
   world = bump.newWorld(64)
 
-  --Load Objects
+  --Create player
   player = Player:new(world, 128, 128)
+
+  --Create camera
+  cam = camera(player.x, player.y)
 
   --Create map
   map = {
     blocks = {},
-    width = love.window.getWidth(),
+    width = love.window.getWidth()*3,
     height = love.window.getHeight(),
     tileSize = 32
   }
@@ -67,12 +66,22 @@ function love.update(dt)
   player:update(dt)
 
   -- Make camera smooth-follow the player 
-  if distance(player.x, player.y, cam.x, cam.y) > 64 then
-    flux.to(cam, 0.6, {x = player.x, y = player.y}):ease("quadout")
+  if math.abs(player.x - cam.x) > 64 then
+    tweenX = flux.to(cam, 0.1, {x = getNewCamX(cam.x, cam.y, player.x, player.y, 64)}):ease("linear")
   end
+  cam.y = player.y 
+
   flux.update(dt)
 
-  cam:lookAt(player.x, player.y)
+  -- if love.keyboard.isDown("w") then
+  --   cam.y = cam.y - 1
+  -- elseif love.keyboard.isDown("s") then
+  --   cam.y = cam.y + 1
+  -- elseif love.keyboard.isDown("a") then
+  --   cam.x = cam.x - 1
+  -- elseif love.keyboard.isDown("d") then
+  --   cam.x = cam.x + 1
+  -- end
 end
 
 function love.draw()
@@ -90,12 +99,34 @@ function love.draw()
   player:draw()
 
 
+  --Draw camera
+  -- love.graphics.line(cam.x, cam.y, player.x, player.y)
+  -- love.graphics.setColor(0, 0, 255)
+  -- love.graphics.circle("fill", cam.x, cam.y, 6, 20)
+
   cam:detach()
 
   --FPS
+  love.graphics.setColor(255, 255, 255)
   love.graphics.print("FPS: " .. love.timer.getFPS(), 2, 2)
 end
 
 function distance(x1, y1, x2, y2)
   return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
+end
+
+-- Returns a point d distance along the line from (x1, y1) to (x2, y2)
+function getNewCamX(x1, y1, x2, y2, d)
+  local px, py
+  local vx = math.abs(x2 - x1)
+  local vy = math.abs(y2 - y1)
+  local magnitude = math.sqrt(vx*vx + vy*vy)
+
+  vx = vx / magnitude
+
+  if x1 < x2 then
+    return x1 + vx * (magnitude - d)
+  else
+    return x1 - vx * (magnitude - d)
+  end
 end

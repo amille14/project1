@@ -4,12 +4,12 @@ Player = class("Player", PhysicsBody)
 local attackEnded = false
 
 function Player:initialize(world, x, y)
-  PhysicsBody.initialize(self, 32, 48, x, y, 40, 0.5, 0.1, 9.81 * 7, 0, false)
+  PhysicsBody.initialize(self, 32, 48, x, y, 40, 0.4, 4.5, 9.81 * 7, 0, false)
 
   self.state = "idle"
   self.direction = "right"
-  self.speed = 30 -- 160
-  self.airSpeed = 0.20  -- Coefficient of air speed
+  self.speed = 140
+  self.airSpeed = (1 / self.mass) * 8  -- Coefficient of air speed
   self.jumpTime = 0
   self.maxJumpTime = 80 -- in milliseconds
   self.jumpReleased = true
@@ -48,7 +48,7 @@ function Player:initialize(world, x, y)
         anim:pauseAtEnd()
         attackEnded = true
       end),
-    ["airStabbing"] = anim8.newAnimation(self.frames["airStabbing"]('1-3', 1), {0.1, 0.04, 0.3},
+    ["airStabbing"] = anim8.newAnimation(self.frames["airStabbing"]('3-3', 1), {0.3},
       function(anim, loops)
         anim:pauseAtEnd()
       end)
@@ -232,5 +232,5 @@ function Player:draw ()
   end
 
   self.currentAnim:draw(self.images[self.state], self.x + drawOffset.x, self.y + drawOffset.y, 0, sx, sy, ox, oy)
-  self:drawOutline()
+  -- self:drawOutline()
 end
