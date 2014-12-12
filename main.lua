@@ -17,6 +17,7 @@ require "mixins/corners"
 -- Load Classes
 require "player"
 require "block"
+require "bat"
 
 function love.load()
   love.graphics.setBackgroundColor(0, 100, 100)
@@ -26,8 +27,9 @@ function love.load()
   --Create bump world
   world = bump.newWorld(64)
 
-  --Create player
+  --Create Objects
   player = Player:new(world, 128, 128)
+  bats = { Bat:new(world, 480, 480), Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
 
   --Create camera
   cam = camera(player.x, player.y)
@@ -53,17 +55,17 @@ function love.load()
 end
 
 function love.keyreleased(key)
-  if key == " " then
-    player:releaseAttack()
-  end
-
-  if key == "up" then
-    player:releaseJump()
+  if key == "escape" then love.event.quit()
+  elseif key == " "  then player:releaseAttack()
+  elseif key == "up" then player:releaseJump()
   end
 end
 
 function love.update(dt)
   player:update(dt)
+  for i, bat in ipairs(bats) do
+    bat:update(dt)
+  end
 
   -- Make camera smooth-follow the player 
   if math.abs(player.x - cam.x) > 64 then
@@ -97,6 +99,9 @@ function love.draw()
   --Draw player
   love.graphics.setColor(255, 255, 255)
   player:draw()
+  for i, bat in ipairs(bats) do
+    bat:draw()
+  end
 
 
   --Draw camera

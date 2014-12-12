@@ -4,7 +4,7 @@ Player = class("Player", PhysicsBody)
 local attackEnded = false
 
 function Player:initialize(world, x, y)
-  PhysicsBody.initialize(self, 32, 48, x, y, 40, 0.4, 4.5, 9.81 * 7, 0, false)
+  PhysicsBody.initialize(self, 32, 48, x, y, 40, 0.4, 4.5, 9.81 * 7, 0)
 
   self.state = "idle"
   self.direction = "right"
@@ -48,7 +48,7 @@ function Player:initialize(world, x, y)
         anim:pauseAtEnd()
         attackEnded = true
       end),
-    ["airStabbing"] = anim8.newAnimation(self.frames["airStabbing"]('3-3', 1), {0.3},
+    ["airStabbing"] = anim8.newAnimation(self.frames["airStabbing"]('1-3', 1), {0.04, 0.04, 0.1},
       function(anim, loops)
         anim:pauseAtEnd()
       end)
@@ -142,6 +142,8 @@ end
 local playerCollisionFilter = function(other)
   if other:typeOf("Block") then
     return "slide"
+  elseif other:typeOf("Enemy") then
+    return "bounce"
   end
 end
 
@@ -167,6 +169,7 @@ function Player:update (dt)
       if stateChanged then
         self.animations["airStabbing"]:gotoFrame(1)
         self.animations["airStabbing"]:resume()
+        self:applyImpulse(0, 10)
       end
       self.state = "airStabbing"
     
