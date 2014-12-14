@@ -1,7 +1,7 @@
 PhysicsBody = class("PhysicsBody")
 PhysicsBody:include(Corners)
 
-function PhysicsBody:initialize(w, h, x, y, mass, friction, airDrag, gravity, restitution)
+function PhysicsBody:initialize(x, y, w, h, mass, friction, airDrag, gravity, restitution)
   -- Width & height
   self.w = w
   self.h = h
@@ -20,7 +20,6 @@ function PhysicsBody:initialize(w, h, x, y, mass, friction, airDrag, gravity, re
   self.airDrag = airDrag or 0
   self.gravity = gravity or 9.81 * 32
   self.restitution = restitution or 0  -- "Bounciness", should be a number between 0 and -1
-  self.grounded = false
 end
 
 function PhysicsBody:updatePhysics(dt)

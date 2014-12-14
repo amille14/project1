@@ -1,7 +1,7 @@
 Block = class("Block")
 Block:include(Corners)
 
-function Block:initialize(world, w, h, x, y)
+function Block:initialize(world, x, y, w, h)
   self.w = w
   self.h = h
   self.x = x

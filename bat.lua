@@ -3,7 +3,7 @@ require "physics_body"
 Bat = class("Bat", PhysicsBody)
 
 function Bat:initialize(world, x, y)
-  PhysicsBody.initialize(self, 32, 32, x, y, 10, 0.4, 4.5, 0, 0)
+  PhysicsBody.initialize(self, x, y, 32, 32, 10, 0.4, 4.5, 0, 0)
 
   self.state = "flying"
   self.direction = "left"
@@ -23,17 +23,29 @@ function Bat:initialize(world, x, y)
   }
 end
 
-function Bat:typeOf()
-  return "Enemy"
+function Bat:typeOf(type)
+  return type == "Enemy" or type == "Bat"
 end
 
 function Bat:handleCollisions()
+  local x, y, cols, len = world:move(self, self.x, self.y, collisionFilter)
+  self.x, self.y = x, y
+
+  if len > 0 then
+    for i, col in ipairs(cols) do
+      if col.other:typeOf("Block") then
+        if col.normal.y ~= 0 then
+          self.vy = -self.vy * self.restitution
+        elseif col.normal.x ~= 0 then
+          self.vx = -self.vx * self.restitution
+        end
+      end
+    end
+  end
 end
 
 function Bat:update(dt)
   -- Follow Player
-  -- flux.to(self, 0.5, {x = player.x, y = player.y}):ease("linear")
-
   if distance(self.x, self.y, player.x, player.y) < 200 then
     if self.x > player.x then self:applyImpulse(-0.5, 0)
     else self:applyImpulse(0.5, 0) end

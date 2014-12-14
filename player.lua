@@ -4,7 +4,7 @@ Player = class("Player", PhysicsBody)
 local attackEnded = false
 
 function Player:initialize(world, x, y)
-  PhysicsBody.initialize(self, 32, 48, x, y, 40, 0.4, 4.5, 9.81 * 7, 0)
+  PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 4.5, 9.81 * 7, 0)
 
   self.state = "idle"
   self.direction = "right"
@@ -15,6 +15,17 @@ function Player:initialize(world, x, y)
   self.jumpReleased = true
   self.chargeTime = 0
   self.maxChargeTime = 1000 -- in milliseconds
+
+  self.colliders = {
+    ["attack"] = Collider:new("Attack", self.x + self.w, self.y, 32, self.h, "Attack", function()
+      self.colliders["attack"].x = self.x + self.w
+      self.colliders["attack"].y = self.y
+    end),
+    ["airStab"] = Collider:new("AirStab", self.x + 4, self.y + self.h - 16, 24, 32, "Attack", function()
+      self.colliders["airStab"].x = self.x + 4
+      self.colliders["airStab"].y = self.y + self.h - 16
+    end)
+  }
 
   -- Add body to bump world
   world:add(self, self.x, self.y, self.w, self.h)
@@ -47,12 +58,25 @@ function Player:initialize(world, x, y)
       function(anim, loops)
         anim:pauseAtEnd()
         attackEnded = true
+        signal.emit("player-attack-ended", anim)
       end),
     ["airStabbing"] = anim8.newAnimation(self.frames["airStabbing"]('1-3', 1), {0.04, 0.04, 0.1},
       function(anim, loops)
         anim:pauseAtEnd()
+        signal.emit("player-air-stab-ended", anim)
       end)
   }
+
+  -- Register callbacks
+  signal.register("player-attack-ended", function(self, anim, loops)
+    print(self)
+    -- world:remove(self.colliders["attack"])
+  end)
+
+  signal.register("player-air-stab-ended", function(self, anim, loops)
+    print(self)
+    -- world:remove(self.colliders["airStab"])
+  end)
 end
 
 
@@ -121,25 +145,41 @@ end
 -- Collisions
 ------------------------------------
 function Player:handleCollisions()
-  local x, y, cols, len = world:move(self, self.x, self.y, playerCollisionFilter)
+  local x, y, cols, len = world:move(self, self.x, self.y, collisionFilter)
   self.x, self.y = x, y
+  self.grounded = false
 
   if len > 0 then
-    for i, v in ipairs(cols) do
-      if v.other:typeOf("Block") then
-        if v.normal.x == 0 and v.normal.y == -1 then
+    for i, col in ipairs(cols) do
+      if col.other:typeOf("Block") or col.other:typeOf("Enemy") then
+        if col.normal.x == 0 and col.normal.y == -1 then
           self.grounded = true
           self.vy = 0
           self.jumpTime = self.maxJumpTime
-        elseif v.normal.x == 0 and v.normal.y == 1 then
+        elseif col.normal.x == 0 and col.normal.y == 1 then
           self.vy = -self.vy * self.restitution
         end
       end
+
+      if col.other:typeOf("Enemy") then
+        if col.normal.x == 0 and col.normal.y == -1 then
+          if self.direction == "left" then
+            self:applyImpulse(-5, -20)
+          elseif self.direction == "right" then
+            self:applyImpulse(5, -20)
+          end
+        end
+      end
+
     end
   end
 end
 
-local playerCollisionFilter = function(other)
+function Player:handleAttackCollisions()
+
+end
+
+local collisionFilter = function(other)
   if other:typeOf("Block") then
     return "slide"
   elseif other:typeOf("Enemy") then
@@ -171,6 +211,11 @@ function Player:update (dt)
         self.animations["airStabbing"]:resume()
         self:applyImpulse(0, 10)
       end
+
+      if self.animations["airStabbing"].position == 1 and not world:hasItem(self.colliders["airStab"]) then
+        self.colliders["airStab"]:add()
+      end
+
       self.state = "airStabbing"
     
     -- Charge attack
@@ -194,8 +239,14 @@ function Player:update (dt)
   -- Update physics
   self:updatePhysics(dt)
 
+  -- Update colliders
+  for k, v in pairs(self.colliders) do
+    v:update(dt)
+  end
+
   -- Collision detection
   self:handleCollisions()
+  self:handleAttackCollisions()
   if self.grounded then  
     self.jumpTime = self.maxJumpTime
   end
@@ -235,5 +286,18 @@ function Player:draw ()
   end
 
   self.currentAnim:draw(self.images[self.state], self.x + drawOffset.x, self.y + drawOffset.y, 0, sx, sy, ox, oy)
-  -- self:drawOutline()
+  self:drawOutline()
+
+  for k, v in pairs(self.colliders) do
+    v:drawOutline(255, 0, 0)
+  end
 end
+
+
+
+-- Utility methods
+--------------------------------------
+function Player:typeOf(type)
+  return type == "Player"
+end
+

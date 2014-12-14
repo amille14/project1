@@ -15,6 +15,7 @@ vector    = require "lib/hump/vector"
 require "mixins/corners"
 
 -- Load Classes
+require "collider"
 require "player"
 require "block"
 require "bat"
@@ -48,7 +49,7 @@ function love.load()
     for j = 0, map.heightInTiles do
       if j == map.heightInTiles - 7 and i > map.widthInTiles / 2 or j == map.heightInTiles - 1 then
         map.blocks[i] = map.blocks[i] or {}
-        map.blocks[i][j] = Block:new(world, map.tileSize, map.tileSize, i * map.tileSize, j * map.tileSize)
+        map.blocks[i][j] = Block:new(world, i * map.tileSize, j * map.tileSize, map.tileSize, map.tileSize)
       end
     end
   end
