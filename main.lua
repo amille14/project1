@@ -4,7 +4,7 @@ class = require "lib/middleclass"
 bump  = require "lib/bump"
 anim8 = require "lib/anim8"
 flux  = require "lib/flux"
-serialize = require "lib/ser"
+serialize = require "lib/serpent"
 camera    = require "lib/hump/camera"
 gamestate = require "lib/hump/gamestate"
 signal    = require "lib/hump/signal"
@@ -59,7 +59,12 @@ function love.keyreleased(key)
   if key == "escape" then love.event.quit()
   elseif key == " "  then player:releaseAttack()
   elseif key == "up" then player:releaseJump()
+  elseif key == "down" then player:releaseAirStab()
   end
+end
+
+function love.keypressed(key)
+  if key == "up" then player:jump() end
 end
 
 function love.update(dt)
@@ -104,11 +109,7 @@ function love.draw()
     bat:draw()
   end
 
-
-  --Draw camera
-  -- love.graphics.line(cam.x, cam.y, player.x, player.y)
-  -- love.graphics.setColor(0, 0, 255)
-  -- love.graphics.circle("fill", cam.x, cam.y, 6, 20)
+  -- drawCamera()
 
   cam:detach()
 
@@ -120,6 +121,18 @@ end
 function distance(x1, y1, x2, y2)
   return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
 end
+
+
+-- Camera helpers
+----------------------------------
+
+function drawCamera()
+  love.graphisc.setColor(255, 255, 255)
+  love.graphics.line(cam.x, cam.y, player.x, player.y)
+  love.graphics.setColor(0, 0, 255)
+  love.graphics.circle("fill", cam.x, cam.y, 6, 20)
+end
+
 
 -- Returns a point d distance along the line from (x1, y1) to (x2, y2)
 function getNewCamX(x1, y1, x2, y2, d)

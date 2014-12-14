@@ -6,7 +6,7 @@ function Bat:initialize(world, x, y)
   PhysicsBody.initialize(self, x, y, 32, 32, 10, 0.4, 4.5, 0, 0)
 
   self.state = "flying"
-  self.direction = "left"
+  self.direction = "right"
 
   -- Add body to bump world
   world:add(self, self.x, self.y, self.w, self.h)
@@ -27,8 +27,16 @@ function Bat:typeOf(type)
   return type == "Enemy" or type == "Bat"
 end
 
+local collisionFilter = function(other)
+  if other:typeOf("Player") then
+    return "slide"
+  elseif other:typeOf("Block") then
+    return "slide"
+  end
+end
+
 function Bat:handleCollisions()
-  local x, y, cols, len = world:move(self, self.x, self.y, collisionFilter)
+  local x, y, cols, len = world:move(self, self.x, self.y, function(other) return "slide" end)
   self.x, self.y = x, y
 
   if len > 0 then
@@ -47,11 +55,11 @@ end
 function Bat:update(dt)
   -- Follow Player
   if distance(self.x, self.y, player.x, player.y) < 200 then
-    if self.x > player.x then self:applyImpulse(-0.5, 0)
-    else self:applyImpulse(0.5, 0) end
+    if self.x > player.x then self:applyImpulse(-0.3, 0)
+    else self:applyImpulse(0.3, 0) end
 
-    if self.y > player.y then self:applyImpulse(0, -0.5)
-    else self:applyImpulse(0, 0.5) end
+    if self.y > player.y then self:applyImpulse(0, -0.3)
+    else self:applyImpulse(0, 0.3) end
   end
 
   -- Update physics
@@ -73,10 +81,16 @@ function Bat:update(dt)
 end
 
 function Bat:draw()
-  local sx, sy, ox, oy = 1, 1, 0, 0
+  local sx, sy, ox, oy = 2, 2, 0, 0
   local drawOffset = {
-    x = -8,
-    y = -8
+    ["left"] = {
+      x = -28,
+      y = -32
+    },
+    ["right"] = {
+      x = -32,
+      y = -32
+    }
   }
 
   if self.direction == "right" then
@@ -86,9 +100,11 @@ function Bat:draw()
   end
 
   love.graphics.setColor(255, 255, 255)
-  self.currentAnim:draw(self.images[self.state], self.x + drawOffset.x, self.y + drawOffset.y, 0, sx, sy, ox, oy)
+  self.currentAnim:draw(self.images[self.state], self.x + drawOffset[self.direction].x, self.y + drawOffset[self.direction].y, 0, sx, sy, ox, oy)
+  
+  -- Debugging
   -- self:drawOutline()
 
-  love.graphics.setColor(255, 0, 0)
-  love.graphics.circle("line", self.x, self.y, 200)
+  -- love.graphics.setColor(255, 0, 0)
+  -- love.graphics.circle("line", self.x, self.y, 200)
 end

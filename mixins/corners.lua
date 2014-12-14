@@ -23,5 +23,5 @@ end
 
 function drawOutline(body)
   love.graphics.setColor(255, 0, 0)
-  love.graphics.polygon("line", body.x(), body.y(), body.x() + body.w, body.y(), body.x() + body.w, body.y() + body.h, body.x(), body.y() + body.h)
+  love.graphics.polygon("line", body.x, body.y, body.x + body.w, body.y, body.x + body.w, body.y + body.h, body.x, body.y + body.h)
 end

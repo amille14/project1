@@ -1,7 +1,6 @@
 require "physics_body"
 
 Player = class("Player", PhysicsBody)
-local attackEnded = false
 
 function Player:initialize(world, x, y)
   PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 4.5, 9.81 * 7, 0)
@@ -13,13 +12,18 @@ function Player:initialize(world, x, y)
   self.jumpTime = 0
   self.maxJumpTime = 80 -- in milliseconds
   self.jumpReleased = true
+  self.canJump = true
+  self.jumpCount = 0
   self.chargeTime = 0
   self.maxChargeTime = 1000 -- in milliseconds
+  self.attackEnded = false
 
   self.colliders = {
-    ["attack"] = Collider:new("Attack", self.x + self.w, self.y, 32, self.h, "Attack", function()
-      self.colliders["attack"].x = self.x + self.w
-      self.colliders["attack"].y = self.y
+    ["attack"] = Collider:new("Attack", self.x + self.w, self.y, 32, self.h - 8, "Attack", function()
+      local this = self.colliders["attack"]
+      if self.direction == "right" then this.x = self.x + self.w
+      else this.x = self.x - this.w end
+      this.y = self.y + 8
     end),
     ["airStab"] = Collider:new("AirStab", self.x + 4, self.y + self.h - 16, 24, 32, "Attack", function()
       self.colliders["airStab"].x = self.x + 4
@@ -57,25 +61,18 @@ function Player:initialize(world, x, y)
     ["attacking"] = anim8.newAnimation(self.frames["attacking"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3},
       function(anim, loops)
         anim:pauseAtEnd()
-        attackEnded = true
         signal.emit("player-attack-ended", anim)
       end),
     ["airStabbing"] = anim8.newAnimation(self.frames["airStabbing"]('1-3', 1), {0.04, 0.04, 0.1},
       function(anim, loops)
         anim:pauseAtEnd()
-        signal.emit("player-air-stab-ended", anim)
       end)
   }
 
   -- Register callbacks
-  signal.register("player-attack-ended", function(self, anim, loops)
-    print(self)
-    -- world:remove(self.colliders["attack"])
-  end)
-
-  signal.register("player-air-stab-ended", function(self, anim, loops)
-    print(self)
-    -- world:remove(self.colliders["airStab"])
+  signal.register("player-attack-ended", function(anim, loops)
+    self.attackEnded = true
+    world:remove(self.colliders["attack"])
   end)
 end
 
@@ -86,17 +83,33 @@ function Player:releaseAttack()
   self.state = "attacking"
 end
 
+function Player:releaseAirStab()
+  local collider = self.colliders["airStab"]
+  if self.state == "airStabbing" and world:hasItem(collider) then
+    world:remove(collider)
+    self.state = "falling"
+  end
+end
+
 function Player:releaseJump()
   self.jumpReleased = true
+  if self.grounded then self.canJump = true end
+end
+
+function Player:jump()
+  if self.canJump then
+    self:applyImpulse(0, -7)
+    self.grounded = false
+    self.jumpReleased = false
+    self.canJump = false
+  end
 end
 
 function Player:move(dt)
   -- Jumping
   if love.keyboard.isDown("up") then
     if self.grounded and self.jumpReleased then
-      self:applyImpulse(0, -7)
-      self.grounded = false
-      self.jumpReleased = false
+      self.canJump = true
 
     elseif not self.grounded and self.jumpTime > 0 and not self.jumpReleased then
       self:applyImpulse(0, -6)
@@ -142,62 +155,15 @@ function Player:move(dt)
 end
 
 
--- Collisions
-------------------------------------
-function Player:handleCollisions()
-  local x, y, cols, len = world:move(self, self.x, self.y, collisionFilter)
-  self.x, self.y = x, y
-  self.grounded = false
-
-  if len > 0 then
-    for i, col in ipairs(cols) do
-      if col.other:typeOf("Block") or col.other:typeOf("Enemy") then
-        if col.normal.x == 0 and col.normal.y == -1 then
-          self.grounded = true
-          self.vy = 0
-          self.jumpTime = self.maxJumpTime
-        elseif col.normal.x == 0 and col.normal.y == 1 then
-          self.vy = -self.vy * self.restitution
-        end
-      end
-
-      if col.other:typeOf("Enemy") then
-        if col.normal.x == 0 and col.normal.y == -1 then
-          if self.direction == "left" then
-            self:applyImpulse(-5, -20)
-          elseif self.direction == "right" then
-            self:applyImpulse(5, -20)
-          end
-        end
-      end
-
-    end
-  end
-end
-
-function Player:handleAttackCollisions()
-
-end
-
-local collisionFilter = function(other)
-  if other:typeOf("Block") then
-    return "slide"
-  elseif other:typeOf("Enemy") then
-    return "bounce"
-  end
-end
-
-
-
--- Update & Draw
+-- Update
 ------------------------------------
 function Player:update (dt)
   local stateChanged = false
 
   -- Reset attack
-  if attackEnded then
+  if self.attackEnded then
     self.state = "idle"
-    attackEnded = false
+    self.attackEnded = false
     self.chargeTime = 0
   end
 
@@ -212,7 +178,7 @@ function Player:update (dt)
         self:applyImpulse(0, 10)
       end
 
-      if self.animations["airStabbing"].position == 1 and not world:hasItem(self.colliders["airStab"]) then
+      if not world:hasItem(self.colliders["airStab"]) then
         self.colliders["airStab"]:add()
       end
 
@@ -238,18 +204,15 @@ function Player:update (dt)
 
   -- Update physics
   self:updatePhysics(dt)
+  self.grounded = false
 
   -- Update colliders
-  for k, v in pairs(self.colliders) do
-    v:update(dt)
+  for name, collider in pairs(self.colliders) do
+    collider:update(dt)
   end
 
   -- Collision detection
   self:handleCollisions()
-  self:handleAttackCollisions()
-  if self.grounded then  
-    self.jumpTime = self.maxJumpTime
-  end
 
   -- Update animation
   self.currentAnim = self.animations[self.state]
@@ -268,6 +231,90 @@ function Player:update (dt)
 end
 
 
+
+-- Collisions
+------------------------------------
+local playerCollisionFilter = function(other)
+  if other:typeOf("Block") then
+    return "slide"
+  elseif other:typeOf("Enemy") then
+    return "bounce"
+  elseif other:typeOf("Attack") then
+    return "cross"
+  end
+end
+
+local attackCollisionFilter = function(other)
+  if other:typeOf("Player") then
+    return "cross"
+  elseif other:typeOf("Enemy") then
+    return "bounce"
+  else
+    return "cross"
+  end
+end
+
+function Player:handleCollisions()
+  -- Handle body collisions
+  local x, y, cols, len = world:move(self, self.x, self.y, playerCollisionFilter)
+  self.x, self.y = x, y
+
+  if len > 0 then
+    for i, col in ipairs(cols) do
+      if col.other:typeOf("Block") or col.other:typeOf("Enemy") then
+        if col.normal.x == 0 and col.normal.y == -1 then
+          if not self.grounded and self.jumpReleased and col.other:typeOf("Block") then player.canJump = true end
+          self.grounded = true
+          self.vy = 0
+          self.jumpTime = self.maxJumpTime
+        elseif col.normal.x == 0 and col.normal.y == 1 then
+          self.vy = -self.vy * self.restitution
+        end
+      end
+
+      if col.other:typeOf("Enemy") then
+        if col.normal.x == 0 and col.normal.y == -1 then
+          if self.direction == "left" then
+            self:applyImpulse(-5, -10)
+            col.other:applyImpulse(5, 10)
+          elseif self.direction == "right" then
+            self:applyImpulse(5, -10)
+            col.other:applyImpulse(-5, 10)
+          end
+        end
+      end
+    end
+  end
+
+  -- Handle attack collisions
+  local collider = self.colliders["airStab"]
+  if self.state == "airStabbing" and world:hasItem(collider) then
+    local x, y, cols, len = world:move(collider, collider.x, collider.y, attackCollisionFilter)
+    -- collider.x = x
+    -- collider.y = y
+
+    if len > 0 then
+      for i, col in ipairs(cols) do
+        if col.normal.x == 0 and col.normal.y == -1 then
+          if col.other:typeOf("Block") then
+            self.vy = 0
+            self:applyImpulse(0, -25)
+          end
+
+          if col.other:typeOf("Enemy") then
+            self.vy = 0
+            self:applyImpulse(0, -25)
+            col.other:applyImpulse(0, 20)
+          end
+        end
+      end
+    end  
+  end
+end
+
+
+-- Draw
+-----------------------------
 function Player:draw ()
   local sx, sy, ox, oy = 2, 2, 0, 0
   local drawOffset = {
@@ -286,7 +333,12 @@ function Player:draw ()
   end
 
   self.currentAnim:draw(self.images[self.state], self.x + drawOffset.x, self.y + drawOffset.y, 0, sx, sy, ox, oy)
+
+
+  -- Debugging
   self:drawOutline()
+
+  -- drawOutline(self.colliders["airStab"])
 
   for k, v in pairs(self.colliders) do
     v:drawOutline(255, 0, 0)
