@@ -20,9 +20,15 @@ function Collider:typeOf(type)
 end
 
 function Collider:add()
-  world:add(self, self.x, self.y, self.w, self.h)
+  if not world:hasItem(self) then
+    print("ADD")
+    world:add(self, self.x, self.y, self.w, self.h)
+  end
 end
 
 function Collider:remove()
-  world:remove(self)
+  if world:hasItem(self) then
+    print("REMOVE")
+    world:remove(self)
+  end
 end

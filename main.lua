@@ -4,6 +4,7 @@ class = require "lib/middleclass"
 bump  = require "lib/bump"
 anim8 = require "lib/anim8"
 flux  = require "lib/flux"
+donut = require("lib/donut")
 serialize = require "lib/serpent"
 camera    = require "lib/hump/camera"
 gamestate = require "lib/hump/gamestate"
@@ -21,16 +22,22 @@ require "block"
 require "bat"
 
 function love.load()
+  debug = Donut.init(5, 5)
   love.graphics.setBackgroundColor(0, 100, 100)
   love.graphics.setDefaultFilter("nearest", "nearest")
   love.math.setRandomSeed(os.time())
+
+  debugger = {
+    fps = debug.add("FPS"),
+    keypressed = debug.add("Last Key Pressed")
+  }
 
   --Create bump world
   world = bump.newWorld(64)
 
   --Create Objects
   player = Player:new(world, 128, 128)
-  bats = { Bat:new(world, 480, 480), Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
+  bats = {}--{ Bat:new(world, 480, 480)} --, Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
 
   --Create camera
   cam = camera(player.x, player.y)
@@ -64,7 +71,11 @@ function love.keyreleased(key)
 end
 
 function love.keypressed(key)
-  if key == "up" then player:jump() end
+  if key == "1" then debug.toggle()
+  elseif key == "up" then player:jump()
+  end
+
+  debug.update(debugger.keypressed, key)
 end
 
 function love.update(dt)
@@ -90,6 +101,9 @@ function love.update(dt)
   -- elseif love.keyboard.isDown("d") then
   --   cam.x = cam.x + 1
   -- end
+
+  -- Update debugger
+  debug.update(debugger.fps, love.timer.getFPS())
 end
 
 function love.draw()
@@ -109,13 +123,13 @@ function love.draw()
     bat:draw()
   end
 
-  -- drawCamera()
+  --Debugging
+  if debug.__debugMode then
+    drawCamera()
+  end
 
   cam:detach()
-
-  --FPS
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.print("FPS: " .. love.timer.getFPS(), 2, 2)
+  debug.draw()
 end
 
 function distance(x1, y1, x2, y2)
@@ -127,7 +141,7 @@ end
 ----------------------------------
 
 function drawCamera()
-  love.graphisc.setColor(255, 255, 255)
+  love.graphics.setColor(255, 255, 255)
   love.graphics.line(cam.x, cam.y, player.x, player.y)
   love.graphics.setColor(0, 0, 255)
   love.graphics.circle("fill", cam.x, cam.y, 6, 20)

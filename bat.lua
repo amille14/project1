@@ -3,10 +3,12 @@ require "physics_body"
 Bat = class("Bat", PhysicsBody)
 
 function Bat:initialize(world, x, y)
-  PhysicsBody.initialize(self, x, y, 32, 32, 10, 0.4, 4.5, 0, 0)
+  PhysicsBody.initialize(self, x, y, 32, 32, 20, 0.4, 4.5, 140, 0, -0.5)
 
   self.state = "flying"
   self.direction = "right"
+  -- self.speed = 200
+  -- self.airSpeed = (1 / self.mass) * 8
 
   -- Add body to bump world
   world:add(self, self.x, self.y, self.w, self.h)
@@ -29,9 +31,11 @@ end
 
 local collisionFilter = function(other)
   if other:typeOf("Player") then
-    return "slide"
+    return "bounce"
   elseif other:typeOf("Block") then
     return "slide"
+  else
+    return "cross"
   end
 end
 
@@ -48,13 +52,17 @@ function Bat:handleCollisions()
           self.vx = -self.vx * self.restitution
         end
       end
+
+      if col.other:typeOf("Player") or col.other:typeOf("Enemy") then
+
+      end
     end
   end
 end
 
 function Bat:update(dt)
   -- Follow Player
-  if distance(self.x, self.y, player.x, player.y) < 200 then
+  if distance(self.x, self.y, player.x, player.y) < 20000000 then
     if self.x > player.x then self:applyImpulse(-0.3, 0)
     else self:applyImpulse(0.3, 0) end
 
@@ -103,8 +111,10 @@ function Bat:draw()
   self.currentAnim:draw(self.images[self.state], self.x + drawOffset[self.direction].x, self.y + drawOffset[self.direction].y, 0, sx, sy, ox, oy)
   
   -- Debugging
-  -- self:drawOutline()
+  if debug.__debugMode then
+    self:drawOutline()
 
-  -- love.graphics.setColor(255, 0, 0)
-  -- love.graphics.circle("line", self.x, self.y, 200)
+    love.graphics.setColor(255, 0, 0)
+    love.graphics.circle("line", self.x, self.y, 200)
+  end
 end
