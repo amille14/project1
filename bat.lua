@@ -7,8 +7,6 @@ function Bat:initialize(world, x, y)
 
   self.state = "flying"
   self.direction = "right"
-  -- self.speed = 200
-  -- self.airSpeed = (1 / self.mass) * 8
 
   -- Add body to bump world
   world:add(self, self.x, self.y, self.w, self.h)
@@ -34,7 +32,8 @@ local collisionFilter = function(other)
     return "bounce"
   elseif other:typeOf("Block") then
     return "slide"
-  else
+  elseif other:typeOf("Attack") then
+    print("GOT HERE")
     return "cross"
   end
 end
@@ -45,16 +44,18 @@ function Bat:handleCollisions()
 
   if len > 0 then
     for i, col in ipairs(cols) do
+
+      -- if col.other:typeOf("Block") then print("Collided: Block")
+      -- elseif col.other:typeOf("Player") then print("Collided: Player")
+      -- elseif col.other:typeOf("Attack") then print("Collided: Attack")
+      -- else print(col.other.x, col.other.y, col.other.w, col.other.h) end
+
       if col.other:typeOf("Block") then
         if col.normal.y ~= 0 then
-          self.vy = -self.vy * self.restitution
+          self.vy = self.vy * self.restitution
         elseif col.normal.x ~= 0 then
-          self.vx = -self.vx * self.restitution
+          self.vx = self.vx * self.restitution
         end
-      end
-
-      if col.other:typeOf("Player") or col.other:typeOf("Enemy") then
-
       end
     end
   end
@@ -114,7 +115,7 @@ function Bat:draw()
   if debug.__debugMode then
     self:drawOutline()
 
-    love.graphics.setColor(255, 0, 0)
-    love.graphics.circle("line", self.x, self.y, 200)
+    -- love.graphics.setColor(255, 0, 0)
+    -- love.graphics.circle("line", self.x, self.y, 200)
   end
 end

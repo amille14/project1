@@ -37,10 +37,10 @@ function love.load()
 
   --Create Objects
   player = Player:new(world, 128, 128)
-  bats = {}--{ Bat:new(world, 480, 480)} --, Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
+  bats = { Bat:new(world, 480, 480)} --, Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
 
   --Create camera
-  cam = camera(player.x, player.y)
+  cam = camera(player.x, player.y - 64)
 
   --Create map
   map = {
@@ -60,6 +60,11 @@ function love.load()
       end
     end
   end
+
+  map.blocks[map.widthInTiles - 8] = {}
+  map.blocks[map.widthInTiles - 8][map.heightInTiles - 8] = Block:new(world, (map.widthInTiles - 8) * map.tileSize, (map.heightInTiles - 8) * map.tileSize, map.tileSize, map.tileSize)
+  map.blocks[map.widthInTiles - 8][map.heightInTiles - 9] = Block:new(world, (map.widthInTiles - 8) * map.tileSize, (map.heightInTiles - 9) * map.tileSize, map.tileSize, map.tileSize)
+  map.blocks[map.widthInTiles - 8][map.heightInTiles - 10] = Block:new(world, (map.widthInTiles - 8) * map.tileSize, (map.heightInTiles - 10) * map.tileSize, map.tileSize, map.tileSize)
 end
 
 function love.keyreleased(key)
@@ -88,19 +93,10 @@ function love.update(dt)
   if math.abs(player.x - cam.x) > 64 then
     tweenX = flux.to(cam, 0.1, {x = getNewCamX(cam.x, cam.y, player.x, player.y, 64)}):ease("linear")
   end
-  cam.y = player.y 
+  
+  cam.y = player.y - 64
 
   flux.update(dt)
-
-  -- if love.keyboard.isDown("w") then
-  --   cam.y = cam.y - 1
-  -- elseif love.keyboard.isDown("s") then
-  --   cam.y = cam.y + 1
-  -- elseif love.keyboard.isDown("a") then
-  --   cam.x = cam.x - 1
-  -- elseif love.keyboard.isDown("d") then
-  --   cam.x = cam.x + 1
-  -- end
 
   -- Update debugger
   debug.update(debugger.fps, love.timer.getFPS())
@@ -150,7 +146,6 @@ end
 
 -- Returns a point d distance along the line from (x1, y1) to (x2, y2)
 function getNewCamX(x1, y1, x2, y2, d)
-  local px, py
   local vx = math.abs(x2 - x1)
   local vy = math.abs(y2 - y1)
   local magnitude = math.sqrt(vx*vx + vy*vy)
@@ -161,5 +156,20 @@ function getNewCamX(x1, y1, x2, y2, d)
     return x1 + vx * (magnitude - d)
   else
     return x1 - vx * (magnitude - d)
+  end
+end
+
+-- Returns a point d distance along the line from (x1, y1) to (x2, y2)
+function getNewCamY(x1, y1, x2, y2, d)
+  local vx = math.abs(x2 - x1)
+  local vy = math.abs(y2 - y1)
+  local magnitude = math.sqrt(vx*vx + vy*vy)
+
+  vy = vy / magnitude
+
+  if y1 < y2 then
+    return y1 + vy * (magnitude - d)
+  else
+    return y1 - vy * (magnitude - d)
   end
 end

@@ -22,15 +22,19 @@ function Player:initialize(world, x, y)
   self.hitStunTime = 0
   self.maxHitStunTime = 500 -- in milliseconds
 
+  debugger.state = debug.add("state")
+  debugger.vx = debug.add("vx")
+  debugger.vy = debug.add("vy")
+
 
   self.colliders = {
-    ["attack"] = Collider:new("Attack", self.x + self.w, self.y, 32, self.h - 8, "Attack", function()
+    ["attack"] = Collider:new("Attack", "Attack", self.x + self.w, self.y + 8, 48, self.h - 16, function()
       local this = self.colliders["attack"]
       if self.direction == "right" then this.x = self.x + self.w
       else this.x = self.x - this.w end
       this.y = self.y + 8
     end),
-    ["airStab"] = Collider:new("AirStab", self.x + 4, self.y + self.h - 16, 24, 32, "Attack", function()
+    ["airStab"] = Collider:new("AirStab", "Attack", self.x + 4, self.y + self.h - 16, 24, 32, function()
       self.colliders["airStab"].x = self.x + 4
       self.colliders["airStab"].y = self.y + self.h - 16
     end)
@@ -221,21 +225,18 @@ function Player:update (dt)
 
   -- Collision detection
   self:handleCollisions()
+  self:handleAirStabCollisions()
+  self:handleAttackCollisions()
 
   -- Update animation
   self.currentAnim = self.animations[self.state]
   if stateChanged then self.currentAnim:gotoFrame(1) end
   self.currentAnim:update(dt)
 
-  -- Attack self-knockback
-  -- if self.state == "attacking" and self.currentAnim.position == 4 and self.chargeTime > 200 then
-  --   if self.direction == "right" then
-  --     self:applyForce(-self.chargeTime * 10, 0)
-  --   else
-  --     self:applyForce(self.chargeTime * 10, 0)
-  --   end
-  -- end
-  -- if self.chargeTime > self.maxChargeTime then self:releaseAttack() end
+  -- Update debugger
+  debug.update(debugger.state, player.state)
+  debug.update(debugger.vx, player.vx)
+  debug.update(debugger.vy, player.vy)
 end
 
 
@@ -247,23 +248,24 @@ local playerCollisionFilter = function(other)
     return "slide"
   elseif other:typeOf("Enemy") then
     return "bounce"
-  elseif other:typeOf("Attack") then
-    return "cross"
-  else
-    return "cross"
   end
 end
 
 local airStabCollisionFilter = function(other)
-  return "slide"
+  if other:typeOf("Enemy") then
+    return "bounce"
+  end
 end
 
 local attackCollisionFilter = function(other)
-  return "cross"
+  -- if other:typeOf("Enemy") then
+  --   print("COLLIDED WITH ENEMY")
+  --   return "cross"
+  -- end
+  return false
 end
 
 function Player:handleCollisions()
-  -- Handle body collisions
   local x, y, cols, len = world:move(self, self.x, self.y, playerCollisionFilter)
   self.x, self.y = x, y
 
@@ -290,20 +292,18 @@ function Player:handleCollisions()
       end
     end
   end
+end
 
-  -- Handle attack collisions
+function Player:handleAirStabCollisions()
   local collider = self.colliders["airStab"]
   if self.state == "airStabbing" and world:hasItem(collider) then
     local x, y, cols, len = world:move(collider, collider.x, collider.y, airStabCollisionFilter)
+    collider.x = x
+    collider.y = y
 
     if len > 0 then
       for i, col in ipairs(cols) do
         if col.normal.x == 0 and col.normal.y == -1 then
-          if col.other:typeOf("Block") then
-            self.vy = 0
-            self:applyImpulse(0, -25)
-          end
-
           if col.other:typeOf("Enemy") then
             self.vy = 0
             self:applyImpulse(0, -25)
@@ -313,29 +313,24 @@ function Player:handleCollisions()
       end
     end  
   end
+end
 
+function Player:handleAttackCollisions()
   local collider = self.colliders["attack"]
   if self.state == "attacking" and world:hasItem(collider) then
-    local x, y, cols, len = world:move(collider, collider.x, collider.y, attackCollisionFilter)
-    -- collider.x = x
-    -- collider.y = y
+    print("Here?")
+    local x, y, cols, len = world:check(collider, collider.x, collider.y, attackCollisionFilter)
+    collider.x = x
+    collider.y = y
+
+    print(len)
 
     if len > 0 then
       for i, col in ipairs(cols) do
-        if col.normal.x ~= 0 then
-          if col.other:typeOf("Block") then
-            -- print("ATTACKED BLOCK")
-            -- print(col.normal.x, col.normal.y)
-            -- self.vx = 0
-            -- self:applyImpulse(col.normal.x * 5, 0)
-          end
-
-          if col.other:typeOf("Enemy") then
-            -- print("ATTACKED ENEMY")
-            -- self.vx = 0
-            -- self:applyImpulse(col.normal.x * 5, 0)
-            -- col.other:knockback(col.other, 8, 0)
-          end
+        if col.other:typeOf("Enemy") then
+          print("GOT HERE")
+          self.vx = 0
+          col.other:knockback(col.other, 8, 0)
         end
       end
     end  
@@ -375,7 +370,8 @@ function Player:draw ()
     self:drawOutline()
     for k, v in pairs(self.colliders) do
       if world:hasItem(v) then
-        v:drawOutline(255, 0, 0)
+        v:drawOutline(0, 0, 255)
+        drawOutline(world.rects[v])
       end
     end
   end
