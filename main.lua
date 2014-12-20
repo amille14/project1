@@ -36,10 +36,10 @@ debugger = {
   fps = debug.add("FPS"),
   keypressed = debug.add("Last Key Pressed")
 }
-map    = {}
 world  = bump.newWorld(64)
-player = Player:new(world, 128, 128)
-cam    = camera(player.x, player.y - 64)
+map    = {}
+player = {}
+cam    = {}
 
 
 
@@ -54,7 +54,9 @@ function love.load()
 
   -- Initialize Objects
   ------------------------------------
-  bats = { Bat:new(world, 480, 480)} --, Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
+  player = Player:new(world, 128, 128)
+  cam = camera(player.x, player.y - 64)
+  bats = { Bat:new(world, 640, 480)} --, Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
 
   map = {
     blocks = {},
@@ -113,7 +115,7 @@ function love.update(dt)
   end
 
 
-  -- Camera
+  -- Update Camera
   ------------------------------------
   if math.abs(player.x - cam.x) > 64 then
     tweenX = flux.to(cam, 0.1, {x = getNewCamX(cam.x, cam.y, player.x, player.y, 64)}):ease("linear")
@@ -122,7 +124,7 @@ function love.update(dt)
   flux.update(dt)
 
 
-  -- Debugger
+  -- Update Debugger
   ------------------------------------
   debug.update(debugger.fps, love.timer.getFPS())
 end
@@ -136,7 +138,7 @@ function love.draw()
   cam:attach()
 
 
-  -- Ground
+  -- Draw Ground
   ------------------------------------
   for i, row in pairs(map.blocks) do
     for j, tile in pairs(row) do
@@ -145,13 +147,14 @@ function love.draw()
   end
 
 
-  -- Player & Objects
+  -- Draw Player & Objects
   ------------------------------------
   love.graphics.setColor(255, 255, 255)
-  player:draw()
   for i, bat in ipairs(bats) do
     bat:draw()
   end
+  love.graphics.setColor(255, 255, 255)
+  player:draw()
 
 
   --Debugging

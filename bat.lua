@@ -34,28 +34,19 @@ end
 -- COLLISIONS
 ------------------------------------
 local collisionFilter = function(other)
-  if other:typeOf("Player") then
-    return "bounce"
-  elseif other:typeOf("Block") then
+  if other:typeOf("Player") or other:typeOf("Block") then
     return "slide"
-  elseif other:typeOf("Attack") then
-    print("GOT HERE BAT")
-    return "cross"
   end
 end
 
 function Bat:handleCollisions()
-  local x, y, cols, len = world:move(self, self.x, self.y, function(other) return "slide" end)
+  local x, y, cols, len = world:move(self, self.x, self.y, collisionFilter)
   self.x, self.y = x, y
 
   if len > 0 then
     for i, col in ipairs(cols) do
 
-      -- if col.other:typeOf("Block") then print("Collided: Block")
-      -- elseif col.other:typeOf("Player") then print("Collided: Player")
-      -- elseif col.other:typeOf("Attack") then print("Collided: Attack")
-      -- else print(col.other.x, col.other.y, col.other.w, col.other.h) end
-
+      -- Block Collision
       if col.other:typeOf("Block") then
         if col.normal.y ~= 0 then
           self.vy = self.vy * self.restitution
@@ -75,29 +66,29 @@ end
 function Bat:update(dt)
 
 
-  -- Movement (Follow Player)
+  -- Update Movement (Follow Player)
   ------------------------------------
-  if distance(self.x, self.y, player.x, player.y) < 20000000 then
-    if self.x > player.x then self:applyImpulse(-0.3, 0)
-    else self:applyImpulse(0.3, 0) end
+  if distance(self.x, self.y, player.x, player.y) < 300 then
+    if self.x > player.x then
+      self.direction = "left"
+      self:applyImpulse(-0.3, 0)
+    else
+      self.direction = "right"
+      self:applyImpulse(0.3, 0)
+    end
 
     if self.y > player.y then self:applyImpulse(0, -0.3)
     else self:applyImpulse(0, 0.3) end
   end
 
 
-  -- Physics
+  -- Update Physics
   ------------------------------------
   self:updatePhysics(dt)
-  if self.vx > 0 then
-    self.direction = "right"
-  else
-    self.direction = "left"
-  end
   self:handleCollisions()
 
 
-  -- Animation
+  -- Update Animation
   ------------------------------------
   self.currentAnim = self.animations[self.state]
   self.currentAnim:update(dt)
@@ -129,13 +120,13 @@ function Bat:draw()
   love.graphics.setColor(255, 255, 255)
   self.currentAnim:draw(self.images[self.state], self.x + drawOffset[self.direction].x, self.y + drawOffset[self.direction].y, 0, sx, sy, ox, oy)
   
-  
-  -- Debugging
+
+  -- Draw Debugging
   ------------------------------------
   if debug.__debugMode then
     self:drawOutline()
 
-    -- love.graphics.setColor(255, 0, 0)
-    -- love.graphics.circle("line", self.x, self.y, 200)
+    love.graphics.setColor(255, 0, 0)
+    love.graphics.circle("line", self.x, self.y, 300)
   end
 end

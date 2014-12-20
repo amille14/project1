@@ -33,7 +33,7 @@ function Player:initialize(world, x, y)
   -- Colliders
   ------------------------------------
   self.colliders = {
-    ["attack"] = Collider:new("Attack", "Attack", self.x + self.w, self.y + 8, 48, self.h - 16, function()
+    ["attack"] = Collider:new("Attack", "Attack", self.x + self.w, self.y + 8, 32, self.h - 16, function()
       local this = self.colliders["attack"]
       if self.direction == "right" then this.x = self.x + self.w
       else this.x = self.x - this.w end
@@ -163,7 +163,6 @@ end
 ------------------------------------
 function Player:releaseAttack()
   self.state = "attacking"
-  self.colliders["attack"]:add()
 end
 
 function Player:releaseAirStab()
@@ -228,6 +227,9 @@ function Player:update (dt)
     if self.state ~= "chargingAttack" then
       self:move(dt)
     end
+
+  else
+    if self.animations["attacking"].position == 3 then self.colliders["attack"]:add() end
   end
 
 
@@ -264,7 +266,7 @@ end
 ------------------------------------
 
 
--- Filters
+-- Collision Filters
 ------------------------------------
 local playerCollisionFilter = function(other)
   if other:typeOf("Block") then
@@ -276,24 +278,19 @@ end
 
 local airStabCollisionFilter = function(other)
   if other:typeOf("Enemy") then
-    return "bounce"
+    return "slide"
   end
 end
 
 local attackCollisionFilter = function(other)
   if other:typeOf("Enemy") then
     return "cross"
-  else
-    return "cross"
   end
-  -- return false
 end
 
 
 -- Collision Handlers
 ------------------------------------
-
--- Player
 function Player:handleCollisions()
   local x, y, cols, len = world:move(self, self.x, self.y, playerCollisionFilter)
   self.x, self.y = x, y
@@ -309,8 +306,7 @@ function Player:handleCollisions()
           self.vy = 0
           self.jumpTime = self.maxJumpTime
         elseif col.normal.x == 0 and col.normal.y == 1 then
-          -- This works because blocks have "infinite" mass. Change this if you add movable blocks with mass!
-          self.vy = self.vy * self.restitution
+          self.vy = self.vy * self.restitution -- This works because blocks have "infinite" mass. Change this if you add movable blocks with mass!
         end
       end
 
@@ -342,7 +338,7 @@ function Player:handleAirStabCollisions()
           if col.other:typeOf("Enemy") then
             self.vy = 0
             self:applyImpulse(0, -25)
-            col.other:knockback(col.other, 0, 8)
+            col.other:knockback(self, 0, 8)
           end
         end
       end
@@ -358,19 +354,18 @@ function Player:handleAttackCollisions()
     collider.x = x
     collider.y = y
 
-    print(len)
-
     if len > 0 then
       for i, col in ipairs(cols) do
 
         -- Enemy Collisions
-        if col.other:typeOf("Enemy") then
-          print("GOT HERE")
-          -- self.vx = 0
-          -- col.other:knockback(col.other, 8, 0)
+        if col.other:typeOf("Enemy") and not collider.collidedWith[col.other] then
+          collider.collidedWith[col.other] = true
+          self.vx = 0
+          if     self.direction == "right" then col.other:knockback(self, 16, 0)
+          elseif self.direction == "left" then col.other:knockback(self, -16, 0) end
         end
       end
-    end  
+    end 
   end
 end
 

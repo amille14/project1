@@ -12,6 +12,8 @@ function Collider:initialize(name, type, x, y, w, h, update)
   self.h = h
 
   self.updateFunction = update or function(dt) end
+
+  self.collidedWith = {}
 end
 
 function Collider:typeOf(type)
@@ -43,4 +45,5 @@ function Collider:remove()
   if world:hasItem(self) then
     world:remove(self)
   end
+  self.collidedWith = {}
 end
