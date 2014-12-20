@@ -1,9 +1,12 @@
 require "physics_body"
 
+------------------------------------
+-- INITIALIZE PLAYER
+------------------------------------
 Player = class("Player", PhysicsBody)
-
 function Player:initialize(world, x, y)
   PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 4.5, 140, 9.81 * 7, 0.5)
+  world:add(self, self.x, self.y, self.w, self.h)
 
   self.state = "idle"
   self.direction = "right"
@@ -27,6 +30,8 @@ function Player:initialize(world, x, y)
   debugger.vy = debug.add("vy")
 
 
+  -- Colliders
+  ------------------------------------
   self.colliders = {
     ["attack"] = Collider:new("Attack", "Attack", self.x + self.w, self.y + 8, 48, self.h - 16, function()
       local this = self.colliders["attack"]
@@ -40,10 +45,9 @@ function Player:initialize(world, x, y)
     end)
   }
 
-  -- Add body to bump world
-  world:add(self, self.x, self.y, self.w, self.h)
 
-  -- Load spritesheets & create animations
+  -- Spritesheets & Animations
+  ------------------------------------
   self.images = {
     ["idle"] = love.graphics.newImage("images/player/idle.png"),
     ["walking"] = love.graphics.newImage("images/player/walking.png"),
@@ -78,15 +82,84 @@ function Player:initialize(world, x, y)
       end)
   }
 
-  -- Register callbacks
+
+  -- Callbacks
+  ------------------------------------
   signal.register("player-attack-ended", function(anim, loops)
     self.attackEnded = true
     self.colliders["attack"]:remove()
   end)
 end
 
+function Player:typeOf(type)
+  return type == "Player"
+end
 
--- Movement
+
+------------------------------------
+-- MOVEMENT & ABILITIES
+------------------------------------
+function Player:move(dt)
+
+
+  -- Jumping
+  ------------------------------------
+  if love.keyboard.isDown("up") then
+    if self.grounded and self.jumpReleased then
+      self.canJump = true
+
+    elseif not self.grounded and self.jumpTime > 0 and not self.jumpReleased then
+      self:applyImpulse(0, -6)
+      self.jumpTime = self.jumpTime - dt * 1000
+    end
+  end
+
+
+  -- Horizontal Movement
+  ------------------------------------
+
+  -- Walk Right
+  if love.keyboard.isDown("right") then
+    self.direction = "right"
+    if self.grounded then self.state = "walking" end
+    if self.state ~= "walking" then stateChanged = true end
+    
+    if self.grounded then
+      if self.vx < self.speed then self.vx = self.vx + self.speed * dt end
+    else
+      if self.vx < self.airSpeed then self.vx = self.vx + self.airSpeed * dt end
+    end
+
+  -- Walk Left
+  elseif love.keyboard.isDown("left") then
+    self.direction = "left"
+    if self.grounded then self.state = "walking" end
+    if self.state ~= "walking" then stateChanged = true end
+    
+    if self.grounded then
+      if self.vx > -self.speed then self.vx = self.vx - self.speed * dt end
+    else
+      if self.vx > -self.airSpeed then self.vx = self.vx - self.airSpeed * dt end
+    end
+
+  -- Idle
+  elseif self.grounded then
+    if self.state ~= "idle" then stateChanged = true end
+    self.state = "idle"
+  end
+
+  -- Jumping & Falling
+  if not self.grounded and self.state ~= "airStabbing" then
+    if self.vy < 6 then
+      self.state = "jumping"
+    else
+      self.state = "falling"
+    end
+  end
+end
+
+
+-- Keypress/Keyrelease Callbacks
 ------------------------------------
 function Player:releaseAttack()
   self.state = "attacking"
@@ -112,57 +185,10 @@ function Player:jump()
   end
 end
 
-function Player:move(dt)
-  -- Jumping
-  if love.keyboard.isDown("up") then
-    if self.grounded and self.jumpReleased then
-      self.canJump = true
-
-    elseif not self.grounded and self.jumpTime > 0 and not self.jumpReleased then
-      self:applyImpulse(0, -6)
-      self.jumpTime = self.jumpTime - dt * 1000
-    end
-  end
-
-  -- Horizontal movement
-  if love.keyboard.isDown("right") then
-    self.direction = "right"
-    if self.grounded then self.state = "walking" end
-    if self.state ~= "walking" then stateChanged = true end
-    
-    if self.grounded then
-      if self.vx < self.speed then self.vx = self.vx + self.speed * dt end
-    else
-      if self.vx < self.airSpeed then self.vx = self.vx + self.airSpeed * dt end
-    end
-
-  elseif love.keyboard.isDown("left") then
-    self.direction = "left"
-    if self.grounded then self.state = "walking" end
-    if self.state ~= "walking" then stateChanged = true end
-    
-    if self.grounded then
-      if self.vx > -self.speed then self.vx = self.vx - self.speed * dt end
-    else
-      if self.vx > -self.airSpeed then self.vx = self.vx - self.airSpeed * dt end
-    end
-
-  elseif self.grounded then
-    if self.state ~= "idle" then stateChanged = true end
-    self.state = "idle"
-  end
-
-  if not self.grounded and self.state ~= "airStabbing" then
-    if self.vy < 6 then
-      self.state = "jumping"
-    else
-      self.state = "falling"
-    end
-  end
-end
 
 
--- Update
+------------------------------------
+-- UPDATE
 ------------------------------------
 function Player:update (dt)
   local stateChanged = false
@@ -204,36 +230,28 @@ function Player:update (dt)
     end
   end
 
-  -- Update physics
+
+  -- Physics
+  ------------------------------------
   self:updatePhysics(dt)
   self.grounded = false
-
-  -- Hitstun
-  -- if self.hitStunned then
-  --   self.hitStunTime = self.hitStunTime + dt * 1000
-  -- end
-
-  -- if self.hitStunTime > self.maxHitStunTime then
-  --   self.hitStunned = false
-  --   self.hitStunTime = 0
-  -- end
-
-  -- Update colliders
   for name, collider in pairs(self.colliders) do
     collider:update(dt)
   end
-
-  -- Collision detection
   self:handleCollisions()
   self:handleAirStabCollisions()
   self:handleAttackCollisions()
 
-  -- Update animation
+
+  -- Animation
+  ------------------------------------
   self.currentAnim = self.animations[self.state]
   if stateChanged then self.currentAnim:gotoFrame(1) end
   self.currentAnim:update(dt)
 
-  -- Update debugger
+
+  -- Debugger
+  ------------------------------------
   debug.update(debugger.state, player.state)
   debug.update(debugger.vx, player.vx)
   debug.update(debugger.vy, player.vy)
@@ -241,7 +259,12 @@ end
 
 
 
--- Collisions
+------------------------------------
+-- COLLISIONS
+------------------------------------
+
+
+-- Filters
 ------------------------------------
 local playerCollisionFilter = function(other)
   if other:typeOf("Block") then
@@ -258,19 +281,27 @@ local airStabCollisionFilter = function(other)
 end
 
 local attackCollisionFilter = function(other)
-  -- if other:typeOf("Enemy") then
-  --   print("COLLIDED WITH ENEMY")
-  --   return "cross"
-  -- end
-  return false
+  if other:typeOf("Enemy") then
+    return "cross"
+  else
+    return "cross"
+  end
+  -- return false
 end
 
+
+-- Collision Handlers
+------------------------------------
+
+-- Player
 function Player:handleCollisions()
   local x, y, cols, len = world:move(self, self.x, self.y, playerCollisionFilter)
   self.x, self.y = x, y
 
   if len > 0 then
     for i, col in ipairs(cols) do
+
+      -- Block Collisions
       if col.other:typeOf("Block") then
         if col.normal.x == 0 and col.normal.y == -1 then
           if not self.grounded and self.jumpReleased and col.other:typeOf("Block") then player.canJump = true end
@@ -283,6 +314,7 @@ function Player:handleCollisions()
         end
       end
 
+      -- Enemy Collisions
       if col.other:typeOf("Enemy") then
         if col.normal.x == 0 and col.normal.y == -1 then
           self.vy = 0
@@ -294,6 +326,7 @@ function Player:handleCollisions()
   end
 end
 
+-- Air Stab
 function Player:handleAirStabCollisions()
   local collider = self.colliders["airStab"]
   if self.state == "airStabbing" and world:hasItem(collider) then
@@ -304,6 +337,8 @@ function Player:handleAirStabCollisions()
     if len > 0 then
       for i, col in ipairs(cols) do
         if col.normal.x == 0 and col.normal.y == -1 then
+
+          -- Enemy Collisions
           if col.other:typeOf("Enemy") then
             self.vy = 0
             self:applyImpulse(0, -25)
@@ -315,10 +350,10 @@ function Player:handleAirStabCollisions()
   end
 end
 
+-- Attack
 function Player:handleAttackCollisions()
   local collider = self.colliders["attack"]
   if self.state == "attacking" and world:hasItem(collider) then
-    print("Here?")
     local x, y, cols, len = world:check(collider, collider.x, collider.y, attackCollisionFilter)
     collider.x = x
     collider.y = y
@@ -327,10 +362,12 @@ function Player:handleAttackCollisions()
 
     if len > 0 then
       for i, col in ipairs(cols) do
+
+        -- Enemy Collisions
         if col.other:typeOf("Enemy") then
           print("GOT HERE")
-          self.vx = 0
-          col.other:knockback(col.other, 8, 0)
+          -- self.vx = 0
+          -- col.other:knockback(col.other, 8, 0)
         end
       end
     end  
@@ -338,34 +375,29 @@ function Player:handleAttackCollisions()
 end
 
 
--- Draw
------------------------------
+
+------------------------------------
+-- DRAW
+------------------------------------
 function Player:draw ()
   local sx, sy, ox, oy = 2, 2, 0, 0
   local drawOffset = {
     x = -16,
     y = -16
   }
-
   if self.direction == "right" then
     self.currentAnim.flippedH = false
   elseif self.direction == "left" then
     self.currentAnim.flippedH = true
   end
-
   if self.state == "attacking" or self.state == "chargingAttack" or self.state == "airStabbing" then
     ox = 16
   end
-
-  -- if self.hitStunned then
-  --   love.graphics.setColor(255, 255 * self.hitStunTime/self.maxHitStunTime, 255 * self.hitStunTime/self.maxHitStunTime)
-  -- else
-  --   love.graphics.setColor(0, 255, 0)
-  -- end
   self.currentAnim:draw(self.images[self.state], self.x + drawOffset.x, self.y + drawOffset.y, 0, sx, sy, ox, oy)
 
 
   -- Debugging
+  ------------------------------------
   if debug.__debugMode then
     self:drawOutline()
     for k, v in pairs(self.colliders) do
@@ -375,13 +407,5 @@ function Player:draw ()
       end
     end
   end
-end
-
-
-
--- Utility methods
---------------------------------------
-function Player:typeOf(type)
-  return type == "Player"
 end
 

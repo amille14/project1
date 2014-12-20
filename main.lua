@@ -1,4 +1,6 @@
--- Load Libraries
+------------------------------------
+-- LOAD LIBRARIES
+------------------------------------
 _ = require "lib/lume"
 class = require "lib/middleclass"
 bump  = require "lib/bump"
@@ -12,37 +14,48 @@ signal    = require "lib/hump/signal"
 timer     = require "lib/hump/timer"
 vector    = require "lib/hump/vector"
 
+
 -- Load Mixins
+------------------------------------
 require "mixins/corners"
 
+
 -- Load Classes
+------------------------------------
 require "collider"
 require "player"
 require "block"
 require "bat"
 
+
+------------------------------------
+-- GLOBALS OBJECTS
+------------------------------------
+debug = Donut.init(5, 5)
+debugger = {
+  fps = debug.add("FPS"),
+  keypressed = debug.add("Last Key Pressed")
+}
+map    = {}
+world  = bump.newWorld(64)
+player = Player:new(world, 128, 128)
+cam    = camera(player.x, player.y - 64)
+
+
+
+------------------------------------
+-- LOAD LOVE
+------------------------------------
 function love.load()
-  debug = Donut.init(5, 5)
   love.graphics.setBackgroundColor(0, 100, 100)
   love.graphics.setDefaultFilter("nearest", "nearest")
   love.math.setRandomSeed(os.time())
 
-  debugger = {
-    fps = debug.add("FPS"),
-    keypressed = debug.add("Last Key Pressed")
-  }
 
-  --Create bump world
-  world = bump.newWorld(64)
-
-  --Create Objects
-  player = Player:new(world, 128, 128)
+  -- Initialize Objects
+  ------------------------------------
   bats = { Bat:new(world, 480, 480)} --, Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
 
-  --Create camera
-  cam = camera(player.x, player.y - 64)
-
-  --Create map
   map = {
     blocks = {},
     width = love.window.getWidth()*3,
@@ -67,6 +80,11 @@ function love.load()
   map.blocks[map.widthInTiles - 8][map.heightInTiles - 10] = Block:new(world, (map.widthInTiles - 8) * map.tileSize, (map.heightInTiles - 10) * map.tileSize, map.tileSize, map.tileSize)
 end
 
+
+
+------------------------------------
+-- KEYPRESSES/KEYRELEASES
+------------------------------------
 function love.keyreleased(key)
   if key == "escape" then love.event.quit()
   elseif key == " "  then player:releaseAttack()
@@ -83,43 +101,61 @@ function love.keypressed(key)
   debug.update(debugger.keypressed, key)
 end
 
+
+
+------------------------------------
+-- LOVE UPDATE
+------------------------------------
 function love.update(dt)
   player:update(dt)
   for i, bat in ipairs(bats) do
     bat:update(dt)
   end
 
-  -- Make camera smooth-follow the player 
+
+  -- Camera
+  ------------------------------------
   if math.abs(player.x - cam.x) > 64 then
     tweenX = flux.to(cam, 0.1, {x = getNewCamX(cam.x, cam.y, player.x, player.y, 64)}):ease("linear")
   end
-  
   cam.y = player.y - 64
-
   flux.update(dt)
 
-  -- Update debugger
+
+  -- Debugger
+  ------------------------------------
   debug.update(debugger.fps, love.timer.getFPS())
 end
 
+
+
+------------------------------------
+-- LOVE DRAW
+------------------------------------
 function love.draw()
   cam:attach()
 
-  --Draw ground
+
+  -- Ground
+  ------------------------------------
   for i, row in pairs(map.blocks) do
     for j, tile in pairs(row) do
       tile:draw()
     end
   end
 
-  --Draw player
+
+  -- Player & Objects
+  ------------------------------------
   love.graphics.setColor(255, 255, 255)
   player:draw()
   for i, bat in ipairs(bats) do
     bat:draw()
   end
 
+
   --Debugging
+  ------------------------------------
   if debug.__debugMode then
     drawCamera()
   end
@@ -128,6 +164,11 @@ function love.draw()
   debug.draw()
 end
 
+
+
+------------------------------------
+-- UTILITY HELPERS
+------------------------------------
 function distance(x1, y1, x2, y2)
   return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
 end
@@ -135,14 +176,12 @@ end
 
 -- Camera helpers
 ----------------------------------
-
 function drawCamera()
   love.graphics.setColor(255, 255, 255)
   love.graphics.line(cam.x, cam.y, player.x, player.y)
   love.graphics.setColor(0, 0, 255)
   love.graphics.circle("fill", cam.x, cam.y, 6, 20)
 end
-
 
 -- Returns a point d distance along the line from (x1, y1) to (x2, y2)
 function getNewCamX(x1, y1, x2, y2, d)

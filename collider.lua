@@ -1,6 +1,8 @@
+------------------------------------
+-- INITIAILZE COLLIDER
+------------------------------------
 Collider = class("Collider")
 Collider:include(Corners)
-
 function Collider:initialize(name, type, x, y, w, h, update)
   self.name = name
   self.type = type
@@ -12,15 +14,25 @@ function Collider:initialize(name, type, x, y, w, h, update)
   self.updateFunction = update or function(dt) end
 end
 
+function Collider:typeOf(type)
+  return type == "Collider" or type == self.type
+end
+
+
+
+------------------------------------
+-- UPDATE
+------------------------------------
 function Collider:update(dt)
   self.updateFunction(dt)
   if world:hasItem(self) then world:update(self, self.x, self.y, self.w, self.h) end
 end
 
-function Collider:typeOf(type)
-  return type == "Collider" or type == self.type
-end
 
+
+------------------------------------
+-- ADD & REMOVE
+------------------------------------
 function Collider:add()
   if not world:hasItem(self) then
     world:add(self, self.x, self.y, self.w, self.h)

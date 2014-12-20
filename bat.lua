@@ -1,17 +1,19 @@
 require "physics_body"
 
+------------------------------------
+-- INITIALIZE BAT
+------------------------------------
 Bat = class("Bat", PhysicsBody)
-
 function Bat:initialize(world, x, y)
   PhysicsBody.initialize(self, x, y, 32, 32, 20, 0.4, 4.5, 140, 0, -0.5)
+  world:add(self, self.x, self.y, self.w, self.h)
 
   self.state = "flying"
   self.direction = "right"
 
-  -- Add body to bump world
-  world:add(self, self.x, self.y, self.w, self.h)
 
-  -- Load spritesheets & create animations
+  -- Spritesheets & Animations
+  -----------------------------------------------
   self.images = {
     ["flying"] = love.graphics.newImage("images/bat/flying.png")
   }
@@ -27,13 +29,17 @@ function Bat:typeOf(type)
   return type == "Enemy" or type == "Bat"
 end
 
+
+------------------------------------
+-- COLLISIONS
+------------------------------------
 local collisionFilter = function(other)
   if other:typeOf("Player") then
     return "bounce"
   elseif other:typeOf("Block") then
     return "slide"
   elseif other:typeOf("Attack") then
-    print("GOT HERE")
+    print("GOT HERE BAT")
     return "cross"
   end
 end
@@ -61,8 +67,16 @@ function Bat:handleCollisions()
   end
 end
 
+
+
+------------------------------------
+-- UPDATE
+------------------------------------
 function Bat:update(dt)
-  -- Follow Player
+
+
+  -- Movement (Follow Player)
+  ------------------------------------
   if distance(self.x, self.y, player.x, player.y) < 20000000 then
     if self.x > player.x then self:applyImpulse(-0.3, 0)
     else self:applyImpulse(0.3, 0) end
@@ -71,24 +85,29 @@ function Bat:update(dt)
     else self:applyImpulse(0, 0.3) end
   end
 
-  -- Update physics
-  self:updatePhysics(dt)
 
-  -- Set direction
+  -- Physics
+  ------------------------------------
+  self:updatePhysics(dt)
   if self.vx > 0 then
     self.direction = "right"
   else
     self.direction = "left"
   end
-
-  -- Collision detection
   self:handleCollisions()
 
-  -- Update animation
+
+  -- Animation
+  ------------------------------------
   self.currentAnim = self.animations[self.state]
   self.currentAnim:update(dt)
 end
 
+
+
+------------------------------------
+-- DRAW
+------------------------------------
 function Bat:draw()
   local sx, sy, ox, oy = 2, 2, 0, 0
   local drawOffset = {
@@ -101,7 +120,6 @@ function Bat:draw()
       y = -32
     }
   }
-
   if self.direction == "right" then
     self.currentAnim.flippedH = true
   elseif self.direction == "left" then
@@ -111,7 +129,9 @@ function Bat:draw()
   love.graphics.setColor(255, 255, 255)
   self.currentAnim:draw(self.images[self.state], self.x + drawOffset[self.direction].x, self.y + drawOffset[self.direction].y, 0, sx, sy, ox, oy)
   
+  
   -- Debugging
+  ------------------------------------
   if debug.__debugMode then
     self:drawOutline()
 
