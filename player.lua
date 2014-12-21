@@ -19,7 +19,6 @@ function Player:initialize(world, x, y)
 
   self.chargeTime = 0
   self.maxChargeTime = 1000 -- in milliseconds
-  self.attackEnded = false
 
   self.hitStunned = false
   self.hitStunTime = 0
@@ -33,7 +32,7 @@ function Player:initialize(world, x, y)
   -- Colliders
   ------------------------------------
   self.colliders = {
-    ["attack"] = Collider:new("Attack", "Attack", self.x + self.w, self.y + 8, 32, self.h - 16, function()
+    ["attack"] = Collider:new("Attack", "Attack", self.x + self.w, self.y + 8, 40, self.h, function()
       local this = self.colliders["attack"]
       if self.direction == "right" then this.x = self.x + self.w
       else this.x = self.x - this.w end
@@ -87,7 +86,6 @@ function Player:initialize(world, x, y)
   ------------------------------------
   signal.register("player-attack-ended", function(anim, loops)
     self.attackEnded = true
-    self.colliders["attack"]:remove()
   end)
 end
 
@@ -192,16 +190,16 @@ end
 function Player:update (dt)
   local stateChanged = false
 
-  -- Reset attack
+  -- Reset Attack
   if self.attackEnded then
     self.state = "idle"
-    self.attackEnded = false
     self.chargeTime = 0
+    self.attackEnded = false
   end
 
   if self.state ~= "attacking" then
 
-    -- Air Stab
+    -- Start Air Stab
     if love.keyboard.isDown("down") and not self.grounded then
       if self.state ~= "airStabbing" then stateChanged = true end
       if stateChanged then
@@ -212,7 +210,7 @@ function Player:update (dt)
         self.state = "airStabbing"
       end
 
-    -- Charge attack
+    -- Start Charge attack
     elseif love.keyboard.isDown(" ") then
       if self.state ~= "chargingAttack" then stateChanged = true end
       if stateChanged then
@@ -229,7 +227,12 @@ function Player:update (dt)
     end
 
   else
-    if self.animations["attacking"].position == 3 then self.colliders["attack"]:add() end
+    local frame = self.animations["attacking"].position
+    if frame == 3 then
+      self.colliders["attack"]:add()
+    elseif frame == 5 then
+      self.colliders["attack"]:remove()
+    end
   end
 
 
@@ -315,7 +318,7 @@ function Player:handleCollisions()
         if col.normal.x == 0 and col.normal.y == -1 then
           self.vy = 0
           self:applyImpulse(0, -20)
-          col.other:knockback(col.other, 0, 6)
+          col.other:knockback(self, 0, 8)
         end
       end
     end
@@ -338,7 +341,7 @@ function Player:handleAirStabCollisions()
           if col.other:typeOf("Enemy") then
             self.vy = 0
             self:applyImpulse(0, -25)
-            col.other:knockback(self, 0, 8)
+            col.other:knockback(self, 0, 12)
           end
         end
       end
@@ -361,8 +364,9 @@ function Player:handleAttackCollisions()
         if col.other:typeOf("Enemy") and not collider.collidedWith[col.other] then
           collider.collidedWith[col.other] = true
           self.vx = 0
-          if     self.direction == "right" then col.other:knockback(self, 16, 0)
-          elseif self.direction == "left" then col.other:knockback(self, -16, 0) end
+          local power = self.chargeTime / 1000 * 16 + 12
+          if     self.direction == "right" then col.other:knockback(self, power, -power/4)
+          elseif self.direction == "left" then col.other:knockback(self, -power, -power/4) end
         end
       end
     end 
