@@ -92,14 +92,11 @@ end
 function love.keyreleased(key)
   if key == "escape" then love.event.quit()
 
-  elseif key == "z" then player:releaseAbility1()
-  elseif key == "x" then player:releaseAbility2()
-  elseif key == "c" then player:releaseAbility3()
-  elseif key == "v" then player:releaseAbility4()
-  elseif key == "up" and not love.keyboard.isDown("z")
-                     and not love.keyboard.isDown("x")
-                     and not love.keyboard.isDown("c")
-                     and not love.keyboard.isDown("v") then player:releaseJump()
+  elseif key == "z" then player:releaseAbility()
+  elseif key == "x" then player:releaseAbility()
+  elseif key == "c" then player:releaseAbility()
+  elseif key == "v" then player:releaseAbility()
+  elseif key == "up" and notUsingAbility() then player:releaseJump()
   end
 end
 
@@ -134,10 +131,7 @@ function love.keypressed(key)
     elseif love.keyboard.isDown("right") then player:executeAbility(4, "side")
     else player:executeAbility(4, "neutral") end
 
-  elseif key == "up" and not love.keyboard.isDown("z")
-                     and not love.keyboard.isDown("x")
-                     and not love.keyboard.isDown("c")
-                     and not love.keyboard.isDown("v") then player:jump()
+  elseif key == "up" and notUsingAbility() then player:jump()
   end
 
   debug.update(debugger.keypressed, key)
@@ -212,6 +206,13 @@ end
 ------------------------------------
 -- UTILITY HELPERS
 ------------------------------------
+function notUsingAbility()
+  return not love.keyboard.isDown("z")
+         and not love.keyboard.isDown("x")
+         and not love.keyboard.isDown("c")
+         and not love.keyboard.isDown("v"
+end
+
 function distance(x1, y1, x2, y2)
   return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
 end
