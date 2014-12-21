@@ -23,9 +23,11 @@ require "mixins/corners"
 -- Load Classes
 ------------------------------------
 require "collider"
+require "ability"
 require "player"
 require "block"
 require "bat"
+
 
 
 ------------------------------------
@@ -54,9 +56,9 @@ function love.load()
 
   -- Initialize Objects
   ------------------------------------
-  player = Player:new(world, 128, 128)
+  player = Player:new(128, 128)
   cam = camera(player.x, player.y - 64)
-  bats = { Bat:new(world, 640, 480)} --, Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
+  bats = { Bat:new(world, 640, 480), Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
 
   map = {
     blocks = {},
@@ -89,15 +91,53 @@ end
 ------------------------------------
 function love.keyreleased(key)
   if key == "escape" then love.event.quit()
-  elseif key == " "  then player:releaseAttack()
-  elseif key == "up" then player:releaseJump()
-  elseif key == "down" then player:releaseAirStab()
+
+  elseif key == "z" then player:releaseAbility1()
+  elseif key == "x" then player:releaseAbility2()
+  elseif key == "c" then player:releaseAbility3()
+  elseif key == "v" then player:releaseAbility4()
+  elseif key == "up" and not love.keyboard.isDown("z")
+                     and not love.keyboard.isDown("x")
+                     and not love.keyboard.isDown("c")
+                     and not love.keyboard.isDown("v") then player:releaseJump()
   end
 end
 
 function love.keypressed(key)
   if key == "1" then debug.toggle()
-  elseif key == "up" then player:jump()
+
+  elseif key == "z" then
+    if     love.keyboard.isDown("up") then player:executeAbility(1, "up")
+    elseif love.keyboard.isDown("down") then player:executeAbility(1, "down")
+    elseif love.keyboard.isDown("left") then player:executeAbility(1, "side")
+    elseif love.keyboard.isDown("right") then player:executeAbility(1, "side")
+    else player:executeAbility(1, "neutral") end
+
+  elseif key == "x" then
+    if     love.keyboard.isDown("up") then player:executeAbility(2, "up")
+    elseif love.keyboard.isDown("down") then player:executeAbility(2, "down")
+    elseif love.keyboard.isDown("left") then player:executeAbility(2, "side")
+    elseif love.keyboard.isDown("right") then player:executeAbility(2, "side")
+    else player:executeAbility(2, "neutral") end
+
+  elseif key == "c" then player:releaseAbility3()
+    if     love.keyboard.isDown("up") then player:executeAbility(3, "up")
+    elseif love.keyboard.isDown("down") then player:executeAbility(3, "down")
+    elseif love.keyboard.isDown("left") then player:executeAbility(3, "side")
+    elseif love.keyboard.isDown("right") then player:executeAbility(3, "side")
+    else player:executeAbility(3, "neutral") end
+
+  elseif key == "v" then player:releaseAbility4()
+    if     love.keyboard.isDown("up") then player:executeAbility(4, "up")
+    elseif love.keyboard.isDown("down") then player:executeAbility(4, "down")
+    elseif love.keyboard.isDown("left") then player:executeAbility(4, "side")
+    elseif love.keyboard.isDown("right") then player:executeAbility(4, "side")
+    else player:executeAbility(4, "neutral") end
+
+  elseif key == "up" and not love.keyboard.isDown("z")
+                     and not love.keyboard.isDown("x")
+                     and not love.keyboard.isDown("c")
+                     and not love.keyboard.isDown("v") then player:jump()
   end
 
   debug.update(debugger.keypressed, key)

@@ -4,7 +4,7 @@ require "physics_body"
 -- INITIALIZE PLAYER
 ------------------------------------
 Player = class("Player", PhysicsBody)
-function Player:initialize(world, x, y)
+function Player:initialize(x, y)
   PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 4.5, 140, 9.81 * 7, 0.5)
   world:add(self, self.x, self.y, self.w, self.h)
 
@@ -48,45 +48,70 @@ function Player:initialize(world, x, y)
   -- Spritesheets & Animations
   ------------------------------------
   self.images = {
-    ["idle"] = love.graphics.newImage("images/player/idle.png"),
+    ["idle"]    = love.graphics.newImage("images/player/idle.png"),
     ["walking"] = love.graphics.newImage("images/player/walking.png"),
     ["jumping"] = love.graphics.newImage("images/player/jumping.png"),
     ["falling"] = love.graphics.newImage("images/player/falling.png"),
-    ["chargingAttack"] = love.graphics.newImage("images/player/attacking.png"),
-    ["attacking"] = love.graphics.newImage("images/player/attacking.png"),
-    ["airStabbing"] = love.graphics.newImage("images/player/air-stab.png")
+
+    ["sword-neutral"] = love.graphics.newImage("images/player/sword/neutral.png"),
+    ["sword-neutral-charging"] = love.graphics.newImage("images/player/sword/neutral-charging.png"),
+    ["sword-neutral-charged"] = love.graphics.newImage("images/player/sword/neutral-charged.png")
+
+    -- ["chargingAttack"] = love.graphics.newImage("images/player/attacking.png"),
+    -- ["attacking"]      = love.graphics.newImage("images/player/attacking.png"),
+    -- ["airStabbing"]    = love.graphics.newImage("images/player/air-stab.png")
   }
-  self.frames = {
-    ["idle"] = anim8.newGrid(32, 32, self.images["idle"]:getWidth(), self.images["idle"]:getHeight()),
+  local frames = {
+    ["idle"]    = anim8.newGrid(32, 32, self.images["idle"]:getWidth(), self.images["idle"]:getHeight()),
     ["walking"] = anim8.newGrid(32, 32, self.images["walking"]:getWidth(), self.images["walking"]:getHeight()),
     ["jumping"] = anim8.newGrid(32, 32, self.images["jumping"]:getWidth(), self.images["jumping"]:getHeight()),
     ["falling"] = anim8.newGrid(32, 32, self.images["falling"]:getWidth(), self.images["falling"]:getHeight()),
-    ["attacking"] = anim8.newGrid(64, 48, self.images["attacking"]:getWidth(), self.images["attacking"]:getHeight()),
-    ["airStabbing"] = anim8.newGrid(64, 48, self.images["airStabbing"]:getWidth(), self.images["airStabbing"]:getHeight())
+
+    ["sword-neutral"] = anim8.newGrid(64, 48, self.images["sword-neutral"]:getWidth(), self.images["sword-neutral"]:getHeight()),
+    ["sword-neutral-charging"] = anim8.newGrid(64, 48, self.images["sword-neutral-charging"]:getWidth(), self.images["sword-neutral-charging"]:getHeight()),
+    ["sword-neutral-charged"] = anim8.newGrid(64, 48, self.images["sword-neutral-charged"]:getWidth(), self.images["sword-neutral-charged"]:getHeight())
+
+    -- ["attacking"]   = anim8.newGrid(64, 48, self.images["attacking"]:getWidth(), self.images["attacking"]:getHeight()),
+    -- ["airStabbing"] = anim8.newGrid(64, 48, self.images["airStabbing"]:getWidth(), self.images["airStabbing"]:getHeight())
   }
-  self.animations = {
-    ["idle"] = anim8.newAnimation(self.frames["idle"]('1-2', 1), {0.6, 0.4}),
-    ["walking"] = anim8.newAnimation(self.frames["walking"]('1-4', 1), 0.14),
-    ["jumping"] = anim8.newAnimation(self.frames["jumping"]('1-1', 1), 0.1),
-    ["falling"] = anim8.newAnimation(self.frames["falling"]('1-2', 1), {0.15, 0.1}),
-    ["chargingAttack"] = anim8.newAnimation(self.frames["attacking"]('1-1', 1), 0.1),
-    ["attacking"] = anim8.newAnimation(self.frames["attacking"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3},
-      function(anim, loops)
-        anim:pauseAtEnd()
-        signal.emit("player-attack-ended", anim)
-      end),
-    ["airStabbing"] = anim8.newAnimation(self.frames["airStabbing"]('1-3', 1), {0.04, 0.04, 0.1},
-      function(anim, loops)
-        anim:pauseAtEnd()
-      end)
+  self.anims = {
+    ["idle"]    = anim8.newAnimation(frames["idle"]('1-2', 1), {0.6, 0.4}),
+    ["walking"] = anim8.newAnimation(frames["walking"]('1-4', 1), 0.14),
+    ["jumping"] = anim8.newAnimation(frames["jumping"]('1-1', 1), 0.1),
+    ["falling"] = anim8.newAnimation(frames["falling"]('1-2', 1), {0.15, 0.1}),
+
+    ["sword-neutral"] = anim8.newAnimation(frames["sword-neutral"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3}, function(anim, loops) signal.emit("player-sword-neutral-ended", anim) end)
+    ["sword-neutral-charging"] = anim8.newAnimation(frames["sword-neutral-charging"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3}, function(anim, loops) signal.emit("player-sword-neutral-ended", anim) end)
+    ["sword-neutral-charged"] = anim8.newAnimation(frames["sword-neutral-charged"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3}, function(anim, loops) signal.emit("player-sword-neutral-ended", anim) end)
+
+
+    -- ["chargingAttack"] = anim8.newAnimation(self.frames["attacking"]('1-1', 1), 0.1),
+    -- ["attacking"] = anim8.newAnimation(self.frames["attacking"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3},
+    --   function(anim, loops)
+    --     anim:pauseAtEnd()
+    --     signal.emit("player-attack-ended", anim)
+    --   end),
+    -- ["airStabbing"] = anim8.newAnimation(self.frames["airStabbing"]('1-3', 1), {0.04, 0.04, 0.1},
+    --   function(anim, loops)
+    --     anim:pauseAtEnd()
+    --   end)
   }
 
 
-  -- Callbacks
+  -- Abilities
   ------------------------------------
-  signal.register("player-attack-ended", function(anim, loops)
-    self.attackEnded = true
-  end)
+  self.abilities = {
+    {
+      neutral = SwordNeutral:new(self, "player-sword-neutral-ended", {
+        ["anim"] = self.anims["sword-neutral"],
+        ["chargingAnim"] = self.anims["sword-neutral-charging"],
+        ["chargedAnim"] = self.anims["sword-neutral-charged"]
+      }),
+      side = SwordSide:new(),
+      up   = SwordUp:new(),
+      down = SwordDown:new()
+    }
+  }
 end
 
 function Player:typeOf(type)
@@ -203,8 +228,8 @@ function Player:update (dt)
     if love.keyboard.isDown("down") and not self.grounded then
       if self.state ~= "airStabbing" then stateChanged = true end
       if stateChanged then
-        self.animations["airStabbing"]:gotoFrame(1)
-        self.animations["airStabbing"]:resume()
+        self.anims["airStabbing"]:gotoFrame(1)
+        self.anims["airStabbing"]:resume()
         self:applyImpulse(0, 10)
         self.colliders["airStab"]:add()
         self.state = "airStabbing"
@@ -214,8 +239,8 @@ function Player:update (dt)
     elseif love.keyboard.isDown(" ") then
       if self.state ~= "chargingAttack" then stateChanged = true end
       if stateChanged then
-        self.animations["attacking"]:gotoFrame(1)
-        self.animations["attacking"]:resume()
+        self.anims["attacking"]:gotoFrame(1)
+        self.anims["attacking"]:resume()
         self.state = "chargingAttack"
       end
       self.chargeTime = self.chargeTime + dt * 1000
@@ -227,7 +252,7 @@ function Player:update (dt)
     end
 
   else
-    local frame = self.animations["attacking"].position
+    local frame = self.anims["attacking"].position
     if frame == 3 then
       self.colliders["attack"]:add()
     elseif frame == 5 then
@@ -236,7 +261,7 @@ function Player:update (dt)
   end
 
 
-  -- Physics
+  -- Update Physics
   ------------------------------------
   self:updatePhysics(dt)
   self.grounded = false
@@ -248,14 +273,14 @@ function Player:update (dt)
   self:handleAttackCollisions()
 
 
-  -- Animation
+  -- Update Animation
   ------------------------------------
-  self.currentAnim = self.animations[self.state]
+  self.currentAnim = self.anims[self.state]
   if stateChanged then self.currentAnim:gotoFrame(1) end
   self.currentAnim:update(dt)
 
 
-  -- Debugger
+  -- Update Debugger
   ------------------------------------
   debug.update(debugger.state, player.state)
   debug.update(debugger.vx, player.vx)
