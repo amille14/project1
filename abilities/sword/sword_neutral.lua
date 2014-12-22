@@ -3,7 +3,7 @@
 ------------------------------------
 SwordNeutral = class("SwordNeutral", Ability)
 function SwordNeutral:initialize(user, endSignal, anims)
-  Ability.initialize(self, user, endSignal, animation)
+  Ability.initialize(self, user, endSignal, anims)
 
   self.colliders = {
     Collider:new("Ability", user.x + user.w, user.y + 8, 40, user.h)
@@ -16,22 +16,22 @@ end
 -- UPDATE
 ------------------------------------
 function  SwordNeutral:update(dt)
-  local collider = self.colliders[0]
+  local collider = self.colliders[1]
 
   if self.state == "charged" or self.state == "uncharged" then
-    if self.currentAnim[self.state].position == 3 then
+    if self.currentAnim.position == 3 then
       collider:add()
-    elseif self.currentAnim[self.state].position == 5 then
+    elseif self.currentAnim.position == 5 then
       collider:remove()
     end
   end
 
-  if user.direction == "right" then
-    collider.x = user.x + user.w
+  if self.user.direction == "right" then
+    collider.x = self.user.x + self.user.w
   else
-    collider.x = user.x - this.w
+    collider.x = self.user.x - collider.w
   end
-  collider.y = user.y + 8
+  collider.y = self.user.y + 8
   collider:update(dt)
   self:handleCollisions()
 end
@@ -48,8 +48,8 @@ local collisionFilter = function(other)
 end
 
 function SwordNeutral:handleCollisions()
-  local collider = self.colliders[0]
-
+  local collider = self.colliders[1]
+  if world:hasItem(collider) then
     local x, y, cols, len = world:check(collider, collider.x, collider.y, collisionFilter)
     collider.x = x
     collider.y = y
@@ -60,12 +60,12 @@ function SwordNeutral:handleCollisions()
         -- Enemy Collisions
         if col.other:typeOf("Enemy") and not collider.collidedWith[col.other] then
           collider.collidedWith[col.other] = true
-          user.vx = 0
+          self.user.vx = 0
           local power = self.chargeTime / 1000 * 16 + 12
-          if     user.direction == "right" then col.other:knockback(user, power, -power/4)
-          elseif user.direction == "left" then col.other:knockback(user, -power, -power/4) end
+          if     self.user.direction == "right" then col.other:knockback(self.user, power, -power/4)
+          elseif self.user.direction == "left" then col.other:knockback(self.user, -power, -power/4) end
         end
       end
-    end 
+    end
   end
 end

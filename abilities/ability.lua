@@ -5,7 +5,7 @@ Ability = class("Ability")
 function Ability:initialize(user, endSignal, anims)
   self.user = user
   self.anims = anims
-  self.currentAnim = self.anims["uncharged"]
+  self.currentAnim = self.anims["charging"]
   self.colliders = {}
 
   self.state = "idle"
@@ -14,7 +14,8 @@ function Ability:initialize(user, endSignal, anims)
 
   signal.register(endSignal, function(anim)
     anim:pauseAtEnd()
-    self:reset()
+    self.state = "ended"
+    signal.emit("player-ability-ended")
   end)
 end
 
@@ -26,7 +27,7 @@ end
 function Ability:update(dt)
   if self.state == "charging" then
     self.chargeTime = self.chargeTime + dt * 1000
-    if self.chargeTime >= self.maxChargeTime then self:release()
+    if self.chargeTime >= self.maxChargeTime then self:release() end
   end
 
   self.currentAnim:update(dt)
@@ -55,8 +56,10 @@ end
 function Ability:reset()
   self.state = "idle"
   self.chargeTime = 0
+  self.currentAnim = "charging"
   for k,v in pairs(self.anims) do
     v:gotoFrame(1)
+    v:resume()
   end
   for k,v in pairs(self.colliders) do
     v:remove()

@@ -14,14 +14,14 @@ function Bat:initialize(world, x, y)
 
   -- Spritesheets & Animations
   -----------------------------------------------
-  self.images = {
+  local img = {
     ["flying"] = love.graphics.newImage("images/bat/flying.png")
   }
-  self.frames = {
-    ["flying"] = anim8.newGrid(48, 48, self.images["flying"]:getWidth(), self.images["flying"]:getHeight())
+  local frames = {
+    ["flying"] = anim8.newGrid(48, 48, img["flying"]:getWidth(), img["flying"]:getHeight())
   }
   self.animations = {
-    ["flying"] = anim8.newAnimation(self.frames["flying"]('1-4', 1), {0.1, 0.08, 0.06, 0.08})
+    ["flying"] = anim8.newAnimation(img["flying"], frames["flying"]('1-4', 1), {0.1, 0.08, 0.06, 0.08})
   }
 end
 
@@ -118,7 +118,7 @@ function Bat:draw()
   end
 
   love.graphics.setColor(255, 255, 255)
-  self.currentAnim:draw(self.images[self.state], self.x + drawOffset[self.direction].x, self.y + drawOffset[self.direction].y, 0, sx, sy, ox, oy)
+  self.currentAnim:draw(self.x + drawOffset[self.direction].x, self.y + drawOffset[self.direction].y, 0, sx, sy, ox, oy)
   
 
   -- Draw Debugging

@@ -168,7 +168,7 @@ end
 local Animationmt = { __index = Animation }
 local nop = function() end
 
-local function newAnimation(frames, durations, onLoop, onLoopArgs)
+local function newAnimation(image, frames, durations, onLoop, onLoopArgs)
   local td = type(durations);
   if (td ~= 'number' or durations <= 0) and td ~= 'table' then
     error("durations must be a positive number. Was " .. tostring(durations) )
@@ -177,6 +177,7 @@ local function newAnimation(frames, durations, onLoop, onLoopArgs)
   durations = parseDurations(durations, #frames)
   local intervals, totalDuration = parseIntervals(durations)
   return setmetatable({
+      image          = image,
       frames         = cloneArray(frames),
       durations      = durations,
       intervals      = intervals,
@@ -263,7 +264,7 @@ function Animation:resume()
   self.status = "playing"
 end
 
-function Animation:draw(image, x, y, r, sx, sy, ox, oy, ...)
+function Animation:draw(x, y, r, sx, sy, ox, oy, ...)
   local frame = self.frames[self.position]
   if self.flippedH or self.flippedV then
     r,sx,sy,ox,oy = r or 0, sx or 1, sy or 1, ox or 0, oy or 0
@@ -278,7 +279,7 @@ function Animation:draw(image, x, y, r, sx, sy, ox, oy, ...)
       oy = h - oy
     end
   end
-  love.graphics.draw(image, frame, x, y, r, sx, sy, ox, oy, ...)
+  love.graphics.draw(self.image, frame, x, y, r, sx, sy, ox, oy, ...)
 end
 
 -----------------------------------------------------------

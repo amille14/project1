@@ -23,7 +23,8 @@ require "mixins/corners"
 -- Load Classes
 ------------------------------------
 require "collider"
-require "ability"
+require "abilities/ability"
+require "abilities/sword/sword_neutral"
 require "player"
 require "block"
 require "bat"
@@ -210,7 +211,7 @@ function notUsingAbility()
   return not love.keyboard.isDown("z")
          and not love.keyboard.isDown("x")
          and not love.keyboard.isDown("c")
-         and not love.keyboard.isDown("v"
+         and not love.keyboard.isDown("v")
 end
 
 function distance(x1, y1, x2, y2)

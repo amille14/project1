@@ -11,6 +11,7 @@ function Player:initialize(x, y)
   self.state = "idle"
   self.direction = "right"
   self.stateChanged = false
+  self.abilityEnded = false
 
   self.jumpTime = 0
   self.maxJumpTime = 80 -- in milliseconds
@@ -45,42 +46,42 @@ function Player:initialize(x, y)
 
   -- Spritesheets & Animations
   ------------------------------------
-  self.images = {
+  local img = {
     ["idle"]    = love.graphics.newImage("images/player/idle.png"),
     ["walking"] = love.graphics.newImage("images/player/walking.png"),
     ["jumping"] = love.graphics.newImage("images/player/jumping.png"),
     ["falling"] = love.graphics.newImage("images/player/falling.png"),
 
-    ["sword-neutral"] = love.graphics.newImage("images/player/sword/neutral.png"),
-    ["sword-neutral-charging"] = love.graphics.newImage("images/player/sword/neutral-charging.png"),
-    ["sword-neutral-charged"] = love.graphics.newImage("images/player/sword/neutral-charged.png")
+    ["sword-neutral"] = love.graphics.newImage("images/player/sword/sword-neutral.png")
+    -- ["sword-neutral-charging"] = love.graphics.newImage("images/player/sword/sword-neutral-charging.png"),
+    -- ["sword-neutral-charged"] = love.graphics.newImage("images/player/sword/sword-neutral-charged.png")
 
     -- ["chargingAttack"] = love.graphics.newImage("images/player/attacking.png"),
     -- ["attacking"]      = love.graphics.newImage("images/player/attacking.png"),
     -- ["airStabbing"]    = love.graphics.newImage("images/player/air-stab.png")
   }
   local frames = {
-    ["idle"]    = anim8.newGrid(32, 32, self.images["idle"]:getWidth(), self.images["idle"]:getHeight()),
-    ["walking"] = anim8.newGrid(32, 32, self.images["walking"]:getWidth(), self.images["walking"]:getHeight()),
-    ["jumping"] = anim8.newGrid(32, 32, self.images["jumping"]:getWidth(), self.images["jumping"]:getHeight()),
-    ["falling"] = anim8.newGrid(32, 32, self.images["falling"]:getWidth(), self.images["falling"]:getHeight()),
+    ["idle"]    = anim8.newGrid(32, 32, img["idle"]:getWidth(), img["idle"]:getHeight()),
+    ["walking"] = anim8.newGrid(32, 32, img["walking"]:getWidth(), img["walking"]:getHeight()),
+    ["jumping"] = anim8.newGrid(32, 32, img["jumping"]:getWidth(), img["jumping"]:getHeight()),
+    ["falling"] = anim8.newGrid(32, 32, img["falling"]:getWidth(), img["falling"]:getHeight()),
 
-    ["sword-neutral"] = anim8.newGrid(64, 48, self.images["sword-neutral"]:getWidth(), self.images["sword-neutral"]:getHeight()),
-    ["sword-neutral-charging"] = anim8.newGrid(64, 48, self.images["sword-neutral-charging"]:getWidth(), self.images["sword-neutral-charging"]:getHeight()),
-    ["sword-neutral-charged"] = anim8.newGrid(64, 48, self.images["sword-neutral-charged"]:getWidth(), self.images["sword-neutral-charged"]:getHeight())
+    ["sword-neutral"] = anim8.newGrid(64, 48, img["sword-neutral"]:getWidth(), img["sword-neutral"]:getHeight()),
+    ["sword-neutral-charging"] = anim8.newGrid(64, 48, img["sword-neutral"]:getWidth(), img["sword-neutral"]:getHeight()),
+    ["sword-neutral-charged"] = anim8.newGrid(64, 48, img["sword-neutral"]:getWidth(), img["sword-neutral"]:getHeight())
 
     -- ["attacking"]   = anim8.newGrid(64, 48, self.images["attacking"]:getWidth(), self.images["attacking"]:getHeight()),
     -- ["airStabbing"] = anim8.newGrid(64, 48, self.images["airStabbing"]:getWidth(), self.images["airStabbing"]:getHeight())
   }
   self.anims = {
-    ["idle"]    = anim8.newAnimation(frames["idle"]('1-2', 1), {0.6, 0.4}),
-    ["walking"] = anim8.newAnimation(frames["walking"]('1-4', 1), 0.14),
-    ["jumping"] = anim8.newAnimation(frames["jumping"]('1-1', 1), 0.1),
-    ["falling"] = anim8.newAnimation(frames["falling"]('1-2', 1), {0.15, 0.1}),
+    ["idle"]    = anim8.newAnimation(img["idle"], frames["idle"]('1-2', 1), {0.6, 0.4}),
+    ["walking"] = anim8.newAnimation(img["walking"], frames["walking"]('1-4', 1), 0.14),
+    ["jumping"] = anim8.newAnimation(img["jumping"], frames["jumping"]('1-1', 1), 0.1),
+    ["falling"] = anim8.newAnimation(img["falling"], frames["falling"]('1-2', 1), {0.15, 0.1}),
     ["ability"] = {
-      ["sword-neutral"] = anim8.newAnimation(frames["sword-neutral"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3}, function(anim, loops) signal.emit("player-sword-neutral-ended", anim) end)
-      ["sword-neutral-charging"] = anim8.newAnimation(self.frames["sword-neutral"]('1-1', 1), 0.1)
-      ["sword-neutral-charged"] = anim8.newAnimation(frames["sword-neutral-charged"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3}, function(anim, loops) signal.emit("player-sword-neutral-ended", anim) end)
+      ["sword-neutral"] = anim8.newAnimation(img["sword-neutral"], frames["sword-neutral"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3}, function(anim, loops) signal.emit("player-sword-neutral-ended", anim) end),
+      ["sword-neutral-charging"] = anim8.newAnimation(img["sword-neutral"], frames["sword-neutral"]('1-1', 1), 0.1),
+      ["sword-neutral-charged"] = anim8.newAnimation(img["sword-neutral"], frames["sword-neutral-charged"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3}, function(anim, loops) signal.emit("player-sword-neutral-ended", anim) end)
     }
 
     -- ["chargingAttack"] = anim8.newAnimation(self.frames["attacking"]('1-1', 1), 0.1),
@@ -100,17 +101,22 @@ function Player:initialize(x, y)
   ------------------------------------
   self.abilities = {
     {
-      neutral = SwordNeutral:new(self, "player-sword-neutral-ended", {
-        ["uncharged"] = self.anims["sword-neutral"],
-        ["charging"] = self.anims["sword-neutral-charging"],
-        ["charged"] = self.anims["sword-neutral-charged"]
-      })
+      ["neutral"] = SwordNeutral:new(self, "player-sword-neutral-ended", {
+                      ["uncharged"] = self.anims["ability"]["sword-neutral"],
+                      ["charging"] = self.anims["ability"]["sword-neutral-charging"],
+                      ["charged"] = self.anims["ability"]["sword-neutral-charged"]})
       -- ,
-      -- side = SwordSide:new(),
-      -- up   = SwordUp:new(),
-      -- down = SwordDown:new()
+      -- ["side"] = SwordSide:new(),
+      -- ["up"]   = SwordUp:new(),
+      -- ["down"] = SwordDown:new()
     }
   }
+
+  self.currentAbility = nil
+
+  signal.register("player-ability-ended", function()
+    self.abilityEnded = true
+  end)
 end
 
 function Player:typeOf(type)
@@ -206,6 +212,19 @@ function Player:jump()
   end
 end
 
+function Player:executeAbility(slot, direction)
+  if self.state ~= "ability" then
+    self.state = "ability"
+    self.stateChanged = true
+    self.currentAbility = self.abilities[slot][direction]
+    self.currentAbility:execute()
+  end
+end
+
+function Player:releaseAbility()
+  self.currentAbility:release()
+end
+
 
 
 ------------------------------------
@@ -258,6 +277,19 @@ function Player:update (dt)
   --   end
   -- end
 
+  if self.abilityEnded then
+    self.state = "idle"
+    self.currentAbility:reset()
+    self.currentAbility = nil
+    self.abilityEnded = false
+  end
+
+  if self.state ~= "ability" then
+    self:move(dt)
+  else
+    self.currentAbility:update(dt)
+  end
+
 
   -- Update Physics
   ------------------------------------
@@ -273,8 +305,15 @@ function Player:update (dt)
 
   -- Update Animation
   ------------------------------------
-  self.currentAnim = self.anims[self.state]
-  if self.stateChanged then self.currentAnim:gotoFrame(1) end
+  if self.state ~= "ability" then
+    self.currentAnim = self.anims[self.state]
+    if self.stateChanged then
+      self.currentAnim:gotoFrame(1)
+      self.stateChanged = false
+    end
+  else
+    self.currentAnim = self.currentAbility.currentAnim
+  end
   self.currentAnim:update(dt)
 
 
@@ -412,22 +451,23 @@ function Player:draw ()
   elseif self.direction == "left" then
     self.currentAnim.flippedH = true
   end
-  if self.state == "attacking" or self.state == "chargingAttack" or self.state == "airStabbing" then
+  if self.state == "ability" then
     ox = 16
   end
-  self.currentAnim:draw(self.images[self.state], self.x + drawOffset.x, self.y + drawOffset.y, 0, sx, sy, ox, oy)
+
+  self.currentAnim:draw(self.x + drawOffset.x, self.y + drawOffset.y, 0, sx, sy, ox, oy)
 
 
   -- Debugging
   ------------------------------------
-  -- if debug.__debugMode then
-  --   self:drawOutline()
-  --   for k, v in pairs(self.colliders) do
-  --     if world:hasItem(v) then
-  --       v:drawOutline(0, 0, 255)
-  --       drawOutline(world.rects[v])
-  --     end
-  --   end
-  -- end
+  if debug.__debugMode then
+    self:drawOutline()
+
+    if self.state == "ability" then
+      for k, col in pairs(self.currentAbility.colliders) do
+        if world:hasItem(col) then col:drawOutline(255, 0, 0) end
+      end
+    end
+  end
 end
 
