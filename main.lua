@@ -25,6 +25,7 @@ require "mixins/corners"
 require "collider"
 require "abilities/ability"
 require "abilities/sword/sword_neutral"
+require "abilities/sword/sword_down_air"
 require "player"
 require "block"
 require "bat"
@@ -58,7 +59,7 @@ function love.load()
   -- Initialize Objects
   ------------------------------------
   player = Player:new(128, 128)
-  cam = camera(player.x, player.y - 64)
+  cam = camera(player.x, player.y)
   bats = { Bat:new(world, 640, 480), Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
 
   map = {
@@ -94,9 +95,9 @@ function love.keyreleased(key)
   if key == "escape" then love.event.quit()
 
   elseif key == "z" then player:releaseAbility()
-  elseif key == "x" then player:releaseAbility()
-  elseif key == "c" then player:releaseAbility()
-  elseif key == "v" then player:releaseAbility()
+  -- elseif key == "x" then player:releaseAbility()
+  -- elseif key == "c" then player:releaseAbility()
+  -- elseif key == "v" then player:releaseAbility()
   elseif key == "up" and notUsingAbility() then player:releaseJump()
   end
 end
@@ -111,26 +112,26 @@ function love.keypressed(key)
     elseif love.keyboard.isDown("right") then player:executeAbility(1, "side")
     else player:executeAbility(1, "neutral") end
 
-  elseif key == "x" then
-    if     love.keyboard.isDown("up") then player:executeAbility(2, "up")
-    elseif love.keyboard.isDown("down") then player:executeAbility(2, "down")
-    elseif love.keyboard.isDown("left") then player:executeAbility(2, "side")
-    elseif love.keyboard.isDown("right") then player:executeAbility(2, "side")
-    else player:executeAbility(2, "neutral") end
+  -- elseif key == "x" then
+  --   if     love.keyboard.isDown("up") then player:executeAbility(2, "up")
+  --   elseif love.keyboard.isDown("down") then player:executeAbility(2, "down")
+  --   elseif love.keyboard.isDown("left") then player:executeAbility(2, "side")
+  --   elseif love.keyboard.isDown("right") then player:executeAbility(2, "side")
+  --   else player:executeAbility(2, "neutral") end
 
-  elseif key == "c" then player:releaseAbility3()
-    if     love.keyboard.isDown("up") then player:executeAbility(3, "up")
-    elseif love.keyboard.isDown("down") then player:executeAbility(3, "down")
-    elseif love.keyboard.isDown("left") then player:executeAbility(3, "side")
-    elseif love.keyboard.isDown("right") then player:executeAbility(3, "side")
-    else player:executeAbility(3, "neutral") end
+  -- elseif key == "c" then player:releaseAbility3()
+  --   if     love.keyboard.isDown("up") then player:executeAbility(3, "up")
+  --   elseif love.keyboard.isDown("down") then player:executeAbility(3, "down")
+  --   elseif love.keyboard.isDown("left") then player:executeAbility(3, "side")
+  --   elseif love.keyboard.isDown("right") then player:executeAbility(3, "side")
+  --   else player:executeAbility(3, "neutral") end
 
-  elseif key == "v" then player:releaseAbility4()
-    if     love.keyboard.isDown("up") then player:executeAbility(4, "up")
-    elseif love.keyboard.isDown("down") then player:executeAbility(4, "down")
-    elseif love.keyboard.isDown("left") then player:executeAbility(4, "side")
-    elseif love.keyboard.isDown("right") then player:executeAbility(4, "side")
-    else player:executeAbility(4, "neutral") end
+  -- elseif key == "v" then player:releaseAbility4()
+  --   if     love.keyboard.isDown("up") then player:executeAbility(4, "up")
+  --   elseif love.keyboard.isDown("down") then player:executeAbility(4, "down")
+  --   elseif love.keyboard.isDown("left") then player:executeAbility(4, "side")
+  --   elseif love.keyboard.isDown("right") then player:executeAbility(4, "side")
+  --   else player:executeAbility(4, "neutral") end
 
   elseif key == "up" and notUsingAbility() then player:jump()
   end
@@ -155,7 +156,7 @@ function love.update(dt)
   if math.abs(player.x - cam.x) > 64 then
     tweenX = flux.to(cam, 0.1, {x = getNewCamX(cam.x, cam.y, player.x, player.y, 64)}):ease("linear")
   end
-  cam.y = player.y - 64
+  cam.y = player.y
   flux.update(dt)
 
 

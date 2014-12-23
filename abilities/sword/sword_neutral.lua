@@ -15,7 +15,7 @@ end
 ------------------------------------
 -- UPDATE
 ------------------------------------
-function  SwordNeutral:update(dt)
+function SwordNeutral:update(dt)
   local collider = self.colliders[1]
 
   if self.state == "charged" or self.state == "uncharged" then
@@ -34,6 +34,8 @@ function  SwordNeutral:update(dt)
   collider.y = self.user.y + 8
   collider:update(dt)
   self:handleCollisions()
+  
+  if self.animationEnded then self:finish() end
 end
 
 

@@ -9,13 +9,14 @@ function Ability:initialize(user, endSignal, anims)
   self.colliders = {}
 
   self.state = "idle"
+  self.animationEnded = false
   self.chargeTime = 0
   self.maxChargeTime = 1000 -- in milliseconds
+  self.canMove = false
 
   signal.register(endSignal, function(anim)
     anim:pauseAtEnd()
-    self.state = "ended"
-    signal.emit("player-ability-ended")
+    self.animationEnded = true
   end)
 end
 
@@ -53,10 +54,15 @@ function Ability:release()
   end
 end
 
+function Ability:finish()
+  signal.emit("player-ability-ended")
+end
+
 function Ability:reset()
   self.state = "idle"
   self.chargeTime = 0
   self.currentAnim = "charging"
+  self.animationEnded = false
   for k,v in pairs(self.anims) do
     v:gotoFrame(1)
     v:resume()

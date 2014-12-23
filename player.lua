@@ -26,6 +26,7 @@ function Player:initialize(x, y)
   debugger.state = debug.add("state")
   debugger.vx = debug.add("vx")
   debugger.vy = debug.add("vy")
+  debugger.ability = debug.add("ability")
 
 
   -- -- Colliders
@@ -52,9 +53,10 @@ function Player:initialize(x, y)
     ["jumping"] = love.graphics.newImage("images/player/jumping.png"),
     ["falling"] = love.graphics.newImage("images/player/falling.png"),
 
-    ["sword-neutral"] = love.graphics.newImage("images/player/sword/sword-neutral.png")
+    ["sword-neutral"] = love.graphics.newImage("images/player/sword/sword-neutral.png"),
     -- ["sword-neutral-charging"] = love.graphics.newImage("images/player/sword/sword-neutral-charging.png"),
     -- ["sword-neutral-charged"] = love.graphics.newImage("images/player/sword/sword-neutral-charged.png")
+    ["sword-down-air"] = love.graphics.newImage("images/player/sword/sword-down-air.png")
 
     -- ["chargingAttack"] = love.graphics.newImage("images/player/attacking.png"),
     -- ["attacking"]      = love.graphics.newImage("images/player/attacking.png"),
@@ -68,7 +70,8 @@ function Player:initialize(x, y)
 
     ["sword-neutral"] = anim8.newGrid(64, 48, img["sword-neutral"]:getWidth(), img["sword-neutral"]:getHeight()),
     ["sword-neutral-charging"] = anim8.newGrid(64, 48, img["sword-neutral"]:getWidth(), img["sword-neutral"]:getHeight()),
-    ["sword-neutral-charged"] = anim8.newGrid(64, 48, img["sword-neutral"]:getWidth(), img["sword-neutral"]:getHeight())
+    ["sword-neutral-charged"] = anim8.newGrid(64, 48, img["sword-neutral"]:getWidth(), img["sword-neutral"]:getHeight()),
+    ["sword-down-air"] = anim8.newGrid(64, 48, img["sword-down-air"]:getWidth(), img["sword-down-air"]:getHeight())
 
     -- ["attacking"]   = anim8.newGrid(64, 48, self.images["attacking"]:getWidth(), self.images["attacking"]:getHeight()),
     -- ["airStabbing"] = anim8.newGrid(64, 48, self.images["airStabbing"]:getWidth(), self.images["airStabbing"]:getHeight())
@@ -81,7 +84,8 @@ function Player:initialize(x, y)
     ["ability"] = {
       ["sword-neutral"] = anim8.newAnimation(img["sword-neutral"], frames["sword-neutral"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3}, function(anim, loops) signal.emit("player-sword-neutral-ended", anim) end),
       ["sword-neutral-charging"] = anim8.newAnimation(img["sword-neutral"], frames["sword-neutral"]('1-1', 1), 0.1),
-      ["sword-neutral-charged"] = anim8.newAnimation(img["sword-neutral"], frames["sword-neutral-charged"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3}, function(anim, loops) signal.emit("player-sword-neutral-ended", anim) end)
+      ["sword-neutral-charged"] = anim8.newAnimation(img["sword-neutral"], frames["sword-neutral-charged"]('1-5', 1), {0.06, 0.1, 0.02, 0.02, 0.3}, function(anim, loops) signal.emit("player-sword-neutral-ended", anim) end),
+      ["sword-down-air"] = anim8.newAnimation(img["sword-down-air"], frames["sword-down-air"]('1-3', 1), {0.04, 0.04, 0.1}, function(anim, loops) signal.emit("player-sword-down-air-ended", anim) end)
     }
 
     -- ["chargingAttack"] = anim8.newAnimation(self.frames["attacking"]('1-1', 1), 0.1),
@@ -104,8 +108,10 @@ function Player:initialize(x, y)
       ["neutral"] = SwordNeutral:new(self, "player-sword-neutral-ended", {
                       ["uncharged"] = self.anims["ability"]["sword-neutral"],
                       ["charging"] = self.anims["ability"]["sword-neutral-charging"],
-                      ["charged"] = self.anims["ability"]["sword-neutral-charged"]})
-      -- ,
+                      ["charged"] = self.anims["ability"]["sword-neutral-charged"]}),
+
+      ["down-air"] = SwordDownAir:new(self, "player-sword-down-air-ended", {
+                      ["uncharged"] = self.anims["ability"]["sword-down-air"]})
       -- ["side"] = SwordSide:new(),
       -- ["up"]   = SwordUp:new(),
       -- ["down"] = SwordDown:new()
@@ -214,15 +220,20 @@ end
 
 function Player:executeAbility(slot, direction)
   if self.state ~= "ability" then
-    self.state = "ability"
-    self.stateChanged = true
-    self.currentAbility = self.abilities[slot][direction]
-    self.currentAbility:execute()
+    if not self.grounded and self.abilities[slot][direction.."-air"] ~= nil then direction = direction .. "-air" end
+    if self.abilities[slot][direction] ~= nil then
+      self.state = "ability"
+      self.stateChanged = true
+      self.currentAbility = self.abilities[slot][direction]
+      self.currentAbility:execute()
+    end
   end
 end
 
 function Player:releaseAbility()
-  self.currentAbility:release()
+  if self.state == "ability" and self.currentAbility ~= nil then
+    self.currentAbility:release()
+  end
 end
 
 
@@ -284,12 +295,9 @@ function Player:update (dt)
     self.abilityEnded = false
   end
 
-  if self.state ~= "ability" then
+  if self.state ~= "ability" or (self.state == "ability" and self.currentAbility.canMove) then
     self:move(dt)
-  else
-    self.currentAbility:update(dt)
   end
-
 
   -- Update Physics
   ------------------------------------
@@ -301,6 +309,10 @@ function Player:update (dt)
   self:handleCollisions()
   -- self:handleAirStabCollisions()
   -- self:handleAttackCollisions()
+
+  if self.currentAbility ~= nil then
+    self.currentAbility:update(dt)
+  end
 
 
   -- Update Animation
@@ -319,9 +331,14 @@ function Player:update (dt)
 
   -- Update Debugger
   ------------------------------------
-  debug.update(debugger.state, player.state)
-  debug.update(debugger.vx, player.vx)
-  debug.update(debugger.vy, player.vy)
+  debug.update(debugger.state, self.state)
+  debug.update(debugger.vx, self.vx)
+  debug.update(debugger.vy, self.vy)
+  if self.currentAbility ~= nil then
+    debug.update(debugger.ability, serialize.dump(self.currentAbility))
+  else
+    debug.update(debugger.ability, "none")
+  end
 end
 
 
