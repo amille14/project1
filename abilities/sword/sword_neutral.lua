@@ -19,9 +19,9 @@ function SwordNeutral:update(dt)
   local collider = self.colliders[1]
 
   if self.state == "charged" or self.state == "uncharged" then
-    if self.currentAnim.position == 2 then
+    if self.currentAnim.position == 4 then
       collider:add()
-    elseif self.currentAnim.position == 6 then
+    elseif self.currentAnim.position == 7 then
       collider:remove()
     end
   end

@@ -26,7 +26,8 @@ require "collider"
 require "abilities/ability"
 require "abilities/sword/sword_neutral"
 require "abilities/sword/sword_side"
-require "abilities/sword/sword_down_air"
+require "abilities/sword/sword_down"
+require "abilities/sword/sword_up"
 require "player"
 require "block"
 require "bat"
@@ -107,9 +108,9 @@ function love.keypressed(key)
   if key == "1" then debug.toggle()
 
   elseif key == "z" then
-    if     love.keyboard.isDown("up") then player:executeAbility(1, "up")
-    elseif love.keyboard.isDown("down") then player:executeAbility(1, "down")
+    if love.keyboard.isDown("down") then player:executeAbility(1, "down")
     elseif love.keyboard.isDown("left") or love.keyboard.isDown("right") then player:executeAbility(1, "side")
+    elseif love.keyboard.isDown("up") then player:executeAbility(1, "up")
     else player:executeAbility(1, "neutral") end
 
   -- elseif key == "x" then

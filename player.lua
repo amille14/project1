@@ -43,7 +43,10 @@ function Player:initialize(x, y)
     ["sword-side"] = love.graphics.newImage("images/player/sword/sword-side.png"),
     -- ["sword-side-charging"] = love.graphics.newImage("images/player/sword/sword-side-charging.png"),
     -- ["sword-side-charged"] = love.graphics.newImage("images/player/sword/sword-side-charged.png"),
-    ["sword-down-air"] = love.graphics.newImage("images/player/sword/sword-down-air.png")
+    ["sword-up"] = love.graphics.newImage("images/player/sword/sword-up.png"),
+    -- ["sword-up-charging"] = love.graphics.newImage("images/player/sword/sword-up-charging.png"),
+    -- ["sword-up-charged"] = love.graphics.newImage("images/player/sword/sword-up-charged.png"),
+    ["sword-down"] = love.graphics.newImage("images/player/sword/sword-down.png")
   }
   local frames = {
     ["idle"]    = anim8.newGrid(32, 32, img["idle"]:getWidth(), img["idle"]:getHeight()),
@@ -59,7 +62,11 @@ function Player:initialize(x, y)
     ["sword-side-charging"] = anim8.newGrid(64, 48, img["sword-side"]:getWidth(), img["sword-side"]:getHeight()),
     ["sword-side-charged"] = anim8.newGrid(64, 48, img["sword-side"]:getWidth(), img["sword-side"]:getHeight()),
 
-    ["sword-down-air"] = anim8.newGrid(64, 48, img["sword-down-air"]:getWidth(), img["sword-down-air"]:getHeight())
+    ["sword-up"] = anim8.newGrid(64, 48, img["sword-up"]:getWidth(), img["sword-up"]:getHeight()),
+    ["sword-up-charging"] = anim8.newGrid(64, 48, img["sword-up"]:getWidth(), img["sword-up"]:getHeight()),
+    ["sword-up-charged"] = anim8.newGrid(64, 48, img["sword-up"]:getWidth(), img["sword-up"]:getHeight()),    
+
+    ["sword-down"] = anim8.newGrid(64, 48, img["sword-down"]:getWidth(), img["sword-down"]:getHeight())
   }
   self.anims = {
     ["idle"]    = anim8.newAnimation(img["idle"], frames["idle"]('1-2', 1), {0.6, 0.4}),
@@ -71,12 +78,15 @@ function Player:initialize(x, y)
       ["sword-neutral-charging"] = anim8.newAnimation(img["sword-neutral"], frames["sword-neutral"]('1-1', 1), 0.1),
       ["sword-side"] = anim8.newAnimation(img["sword-side"], frames["sword-side"]('1-4', 1), {0.03, 0.04, 0.1, 0.2}, function(anim, loops) signal.emit("player-sword-side-ended", anim) end),
       ["sword-side-charging"] = anim8.newAnimation(img["sword-side"], frames["sword-side"]('1-1', 1), 0.1),
-      ["sword-down-air"] = anim8.newAnimation(img["sword-down-air"], frames["sword-down-air"]('1-3', 1), {0.03, 0.04, 0.1}, function(anim, loops) signal.emit("player-sword-down-air-ended", anim) end)
+      ["sword-up"] = anim8.newAnimation(img["sword-up"], frames["sword-up"]('1-7', 1), {0.02, 0.12, 0.02, 0.02, 0.02, 0.02, 0.2}, function(anim, loops) signal.emit("player-sword-up-ended", anim) end),
+      ["sword-up-charging"] = anim8.newAnimation(img["sword-up"], frames["sword-up"]('1-1', 1), 0.1),
+      ["sword-down"] = anim8.newAnimation(img["sword-down"], frames["sword-down"]('1-3', 1), {0.03, 0.04, 0.1}, function(anim, loops) signal.emit("player-sword-down-ended", anim) end)
     }
   }
 
   self.anims["ability"]["sword-neutral-charged"] = self.anims["ability"]["sword-neutral"]
   self.anims["ability"]["sword-side-charged"] = self.anims["ability"]["sword-side"]
+  self.anims["ability"]["sword-up-charged"] = self.anims["ability"]["sword-up"]
 
 
   -- Abilities
@@ -93,8 +103,13 @@ function Player:initialize(x, y)
                   ["charging"] = self.anims["ability"]["sword-side-charging"],
                   ["charged"] = self.anims["ability"]["sword-side-charged"]}),
 
-      ["down-air"] = SwordDownAir:new(self, "player-sword-down-air-ended", {
-                      ["uncharged"] = self.anims["ability"]["sword-down-air"]})
+      ["up"] = SwordUp:new(self, "player-sword-up-ended", {
+                ["uncharged"] = self.anims["ability"]["sword-up"],
+                ["charging"] = self.anims["ability"]["sword-up-charging"],
+                ["charged"] = self.anims["ability"]["sword-up-charged"]}),
+
+      ["down"] = SwordDown:new(self, "player-sword-down-ended", {
+                  ["uncharged"] = self.anims["ability"]["sword-down"]})
     }
   }
 
@@ -196,7 +211,7 @@ end
 
 function Player:executeAbility(slot, direction)
   if self.state ~= "ability" then
-    if not self.grounded and self.abilities[slot][direction.."-air"] ~= nil then direction = direction .. "-air" end
+    -- if not self.grounded and self.abilities[slot][direction.."-air"] ~= nil then direction = direction .. "-air" end
     if self.abilities[slot][direction] ~= nil then
       self.state = "ability"
       self.stateChanged = true
@@ -336,6 +351,7 @@ function Player:draw ()
     self.currentAnim.flippedH = true
   end
   if self.state == "ability" then
+    if self.currentAbility == self.abilities[1]["up"] then oy = 16 end
     ox = 16
   end
 

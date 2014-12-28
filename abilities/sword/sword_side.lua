@@ -16,13 +16,15 @@ end
 -- OTHER METHODS
 ------------------------------------
 function SwordSide:release()
-  Ability.release(self)
-  local force = 16
-  if not self.user.grounded then force = force * (1 / self.user.mass) * 16 end
-  if self.user.direction == "right" then
-    self.user:applyImpulse(force, 0)
-  else
-    self.user:applyImpulse(-force, 0)
+  if self.state == "charging" then
+    Ability.release(self)
+    local force = 16
+    if not self.user.grounded then force = force * (1 / self.user.mass) * 16 end
+    if self.user.direction == "right" then
+      self.user:applyImpulse(force, 0)
+    else
+      self.user:applyImpulse(-force, 0)
+    end
   end
 end
 
