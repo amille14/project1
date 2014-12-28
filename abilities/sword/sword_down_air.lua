@@ -7,7 +7,7 @@ function SwordDownAir:initialize(user, endSignal, anims)
 
   self.canMove = true
   self.colliders = {
-    Collider:new("Ability", self.user.x + 4, self.user.y + self.user.h - 16, 24, 32)
+    Collider:new("Ability", self.user.x + 4, self.user.y + self.user.h - 16, 24, 36)
   }
 end
 
@@ -19,7 +19,6 @@ end
 function SwordDownAir:execute()
   Ability.execute(self)
   Ability.release(self)
-  self.colliders[1]:add()
   self.user:applyImpulse(0, 10)
 end
 
@@ -30,6 +29,7 @@ end
 ------------------------------------
 function SwordDownAir:update(dt)
   local collider = self.colliders[1]
+  if self.currentAnim.position == 2 then collider:add() end
   collider.x = self.user.x + 4
   collider.y = self.user.y + self.user.h - 16
   collider:update(dt)

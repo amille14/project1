@@ -25,6 +25,7 @@ require "mixins/corners"
 require "collider"
 require "abilities/ability"
 require "abilities/sword/sword_neutral"
+require "abilities/sword/sword_side"
 require "abilities/sword/sword_down_air"
 require "player"
 require "block"
@@ -51,7 +52,7 @@ cam    = {}
 -- LOAD LOVE
 ------------------------------------
 function love.load()
-  love.graphics.setBackgroundColor(0, 100, 100)
+  love.graphics.setBackgroundColor(81, 113, 155)
   love.graphics.setDefaultFilter("nearest", "nearest")
   love.math.setRandomSeed(os.time())
 
@@ -108,8 +109,7 @@ function love.keypressed(key)
   elseif key == "z" then
     if     love.keyboard.isDown("up") then player:executeAbility(1, "up")
     elseif love.keyboard.isDown("down") then player:executeAbility(1, "down")
-    elseif love.keyboard.isDown("left") then player:executeAbility(1, "side")
-    elseif love.keyboard.isDown("right") then player:executeAbility(1, "side")
+    elseif love.keyboard.isDown("left") or love.keyboard.isDown("right") then player:executeAbility(1, "side")
     else player:executeAbility(1, "neutral") end
 
   -- elseif key == "x" then
