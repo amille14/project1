@@ -78,7 +78,7 @@ function Player:initialize(x, y)
       ["sword-neutral-charging"] = anim8.newAnimation(img["sword-neutral"], frames["sword-neutral"]('1-1', 1), 0.1),
       ["sword-side"] = anim8.newAnimation(img["sword-side"], frames["sword-side"]('1-4', 1), {0.03, 0.04, 0.1, 0.2}, function(anim, loops) signal.emit("player-sword-side-ended", anim) end),
       ["sword-side-charging"] = anim8.newAnimation(img["sword-side"], frames["sword-side"]('1-1', 1), 0.1),
-      ["sword-up"] = anim8.newAnimation(img["sword-up"], frames["sword-up"]('1-7', 1), {0.02, 0.12, 0.02, 0.02, 0.02, 0.02, 0.2}, function(anim, loops) signal.emit("player-sword-up-ended", anim) end),
+      ["sword-up"] = anim8.newAnimation(img["sword-up"], frames["sword-up"]('1-7', 1), {0.02, 0.12, 0.02, 0.02, 0.02, 0.01, 0.2}, function(anim, loops) signal.emit("player-sword-up-ended", anim) end),
       ["sword-up-charging"] = anim8.newAnimation(img["sword-up"], frames["sword-up"]('1-1', 1), 0.1),
       ["sword-down"] = anim8.newAnimation(img["sword-down"], frames["sword-down"]('1-3', 1), {0.03, 0.04, 0.1}, function(anim, loops) signal.emit("player-sword-down-ended", anim) end)
     }

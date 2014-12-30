@@ -96,17 +96,17 @@ function SwordUp:handleCollisions()
         -- Enemy Collisions
         if col.other:typeOf("Enemy") and not collider.collidedWith[col.other] then
           collider.collidedWith[col.other] = true
-          self.user.vy = 0
+          -- self.user.vy = 0
           local power = 18
           if self.state == "charged" then power = self.chargeTime / 1000 * 16 + power end
           local fy = -power
           local fx = 0
-          if self.currentAnim.position == 3 then fx = -power/2
-          elseif self.currentAnim.position == 4 then fx = -power/4
-          elseif self.currentAnim.position == 5 then fx = power/2
+          if self.currentAnim.position == 3 then fx = -power/4
+          elseif self.currentAnim.position == 4 then fx = 0
+          elseif self.currentAnim.position == 5 then fx = power/4
           elseif self.currentAnim.position == 6 then
             fx = -power
-            fy = -power/2
+            fy = -power/4
           end
           if self.user.direction == "left" then fx = -fx end
           
