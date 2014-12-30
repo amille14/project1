@@ -3,8 +3,7 @@
 ------------------------------------
 Collider = class("Collider")
 Collider:include(Corners)
-function Collider:initialize(name, type, x, y, w, h, update)
-  self.name = name
+function Collider:initialize(type, x, y, w, h, update)
   self.type = type
   self.x = x
   self.y = y

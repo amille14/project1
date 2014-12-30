@@ -23,9 +23,15 @@ require "mixins/corners"
 -- Load Classes
 ------------------------------------
 require "collider"
+require "abilities/ability"
+require "abilities/sword/sword_neutral"
+require "abilities/sword/sword_side"
+require "abilities/sword/sword_down"
+require "abilities/sword/sword_up"
 require "player"
 require "block"
 require "bat"
+
 
 
 ------------------------------------
@@ -47,16 +53,16 @@ cam    = {}
 -- LOAD LOVE
 ------------------------------------
 function love.load()
-  love.graphics.setBackgroundColor(0, 100, 100)
+  love.graphics.setBackgroundColor(81, 113, 155)
   love.graphics.setDefaultFilter("nearest", "nearest")
   love.math.setRandomSeed(os.time())
 
 
   -- Initialize Objects
   ------------------------------------
-  player = Player:new(world, 128, 128)
-  cam = camera(player.x, player.y - 64)
-  bats = { Bat:new(world, 640, 480)} --, Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
+  player = Player:new(128, 128)
+  cam = camera(player.x, player.y)
+  bats = { Bat:new(world, 640, 480), Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
 
   map = {
     blocks = {},
@@ -89,15 +95,46 @@ end
 ------------------------------------
 function love.keyreleased(key)
   if key == "escape" then love.event.quit()
-  elseif key == " "  then player:releaseAttack()
-  elseif key == "up" then player:releaseJump()
-  elseif key == "down" then player:releaseAirStab()
+
+  elseif key == "z" then player:releaseAbility()
+  -- elseif key == "x" then player:releaseAbility()
+  -- elseif key == "c" then player:releaseAbility()
+  -- elseif key == "v" then player:releaseAbility()
+  elseif key == "up" and notUsingAbility() then player:releaseJump()
   end
 end
 
 function love.keypressed(key)
   if key == "1" then debug.toggle()
-  elseif key == "up" then player:jump()
+
+  elseif key == "z" then
+    if love.keyboard.isDown("down") then player:executeAbility(1, "down")
+    elseif love.keyboard.isDown("left") or love.keyboard.isDown("right") then player:executeAbility(1, "side")
+    elseif love.keyboard.isDown("up") then player:executeAbility(1, "up")
+    else player:executeAbility(1, "neutral") end
+
+  -- elseif key == "x" then
+  --   if     love.keyboard.isDown("up") then player:executeAbility(2, "up")
+  --   elseif love.keyboard.isDown("down") then player:executeAbility(2, "down")
+  --   elseif love.keyboard.isDown("left") then player:executeAbility(2, "side")
+  --   elseif love.keyboard.isDown("right") then player:executeAbility(2, "side")
+  --   else player:executeAbility(2, "neutral") end
+
+  -- elseif key == "c" then player:releaseAbility3()
+  --   if     love.keyboard.isDown("up") then player:executeAbility(3, "up")
+  --   elseif love.keyboard.isDown("down") then player:executeAbility(3, "down")
+  --   elseif love.keyboard.isDown("left") then player:executeAbility(3, "side")
+  --   elseif love.keyboard.isDown("right") then player:executeAbility(3, "side")
+  --   else player:executeAbility(3, "neutral") end
+
+  -- elseif key == "v" then player:releaseAbility4()
+  --   if     love.keyboard.isDown("up") then player:executeAbility(4, "up")
+  --   elseif love.keyboard.isDown("down") then player:executeAbility(4, "down")
+  --   elseif love.keyboard.isDown("left") then player:executeAbility(4, "side")
+  --   elseif love.keyboard.isDown("right") then player:executeAbility(4, "side")
+  --   else player:executeAbility(4, "neutral") end
+
+  elseif key == "up" and notUsingAbility() then player:jump()
   end
 
   debug.update(debugger.keypressed, key)
@@ -120,7 +157,7 @@ function love.update(dt)
   if math.abs(player.x - cam.x) > 64 then
     tweenX = flux.to(cam, 0.1, {x = getNewCamX(cam.x, cam.y, player.x, player.y, 64)}):ease("linear")
   end
-  cam.y = player.y - 64
+  cam.y = player.y
   flux.update(dt)
 
 
@@ -172,6 +209,13 @@ end
 ------------------------------------
 -- UTILITY HELPERS
 ------------------------------------
+function notUsingAbility()
+  return not love.keyboard.isDown("z")
+         and not love.keyboard.isDown("x")
+         and not love.keyboard.isDown("c")
+         and not love.keyboard.isDown("v")
+end
+
 function distance(x1, y1, x2, y2)
   return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
 end
