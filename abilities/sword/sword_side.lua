@@ -34,8 +34,9 @@ end
 -- UPDATE
 ------------------------------------
 function SwordSide:update(dt)
-  local collider = self.colliders[1]
+  Ability.update(self, dt)
 
+  local collider = self.colliders[1]
   if self.state == "charged" or self.state == "uncharged" then
     if self.currentAnim.position == 2 then
       collider:add()
@@ -88,6 +89,7 @@ function SwordSide:handleCollisions()
           elseif self.user.direction == "left" then
             col.other:knockback(self.user, -power, 0)
           end
+          col.other:takeDamage(power)
         end
       end
     end

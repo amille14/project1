@@ -4,9 +4,11 @@ require "physics_body"
 -- INITIALIZE BAT
 ------------------------------------
 Bat = class("Bat", PhysicsBody)
+Bat:include(Health)
 function Bat:initialize(world, x, y)
   PhysicsBody.initialize(self, x, y, 32, 32, 20, 0.4, 4.5, 140, 0, -0.5)
   world:add(self, self.x, self.y, self.w, self.h)
+  self:resetHealth()
 
   self.state = "flying"
   self.direction = "right"
@@ -119,7 +121,7 @@ function Bat:draw()
 
   love.graphics.setColor(255, 255, 255)
   self.currentAnim:draw(self.x + drawOffset[self.direction].x, self.y + drawOffset[self.direction].y, 0, sx, sy, ox, oy)
-  
+  self:drawHearts()
 
   -- Draw Debugging
   ------------------------------------

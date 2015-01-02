@@ -16,8 +16,9 @@ end
 -- UPDATE
 ------------------------------------
 function SwordUp:update(dt)
-  local collider = self.colliders[1]
+  Ability.update(self, dt)
 
+  local collider = self.colliders[1]
   if self.state == "charged" or self.state == "uncharged" then
 
     -- Frame 3
@@ -111,6 +112,7 @@ function SwordUp:handleCollisions()
           if self.user.direction == "left" then fx = -fx end
           
           col.other:knockback(self.user, fx, fy)
+          col.other:takeDamage(power)
         end
       end
     end

@@ -16,8 +16,9 @@ end
 -- UPDATE
 ------------------------------------
 function SwordNeutral:update(dt)
-  local collider = self.colliders[1]
+  Ability.update(self, dt)
 
+  local collider = self.colliders[1]
   if self.state == "charged" or self.state == "uncharged" then
     if self.currentAnim.position == 4 then
       collider:add()
@@ -67,6 +68,7 @@ function SwordNeutral:handleCollisions()
           if self.state == "charged" then power = self.chargeTime / 1000 * 16 + power end
           if     self.user.direction == "right" then col.other:knockback(self.user, power, -power/4)
           elseif self.user.direction == "left" then col.other:knockback(self.user, -power, -power/4) end
+          col.other:takeDamage(power)
         end
       end
     end

@@ -52,7 +52,7 @@ local collisionFilter = function(other)
 end
 
 function SwordDown:handleCollisions()
-  local collider = self.colliders[0]
+  local collider = self.colliders[1]
   if world:hasItem(collider) then
     local x, y, cols, len = world:move(collider, collider.x, collider.y, collisionFilter)
     collider.x = x
@@ -67,6 +67,7 @@ function SwordDown:handleCollisions()
             self.user.vy = 0
             self.user:applyImpulse(0, -25)
             col.other:knockback(self.user, 0, 12)
+            col.other:takeDamage(20)
           end
         end
       end

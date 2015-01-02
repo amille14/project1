@@ -18,6 +18,7 @@ vector    = require "lib/hump/vector"
 -- Load Mixins
 ------------------------------------
 require "mixins/corners"
+require "mixins/health"
 
 
 -- Load Classes
@@ -57,6 +58,7 @@ function love.load()
   love.graphics.setDefaultFilter("nearest", "nearest")
   love.math.setRandomSeed(os.time())
 
+  print(serialize.block(math))
 
   -- Initialize Objects
   ------------------------------------
@@ -112,27 +114,6 @@ function love.keypressed(key)
     elseif love.keyboard.isDown("left") or love.keyboard.isDown("right") then player:executeAbility(1, "side")
     elseif love.keyboard.isDown("up") then player:executeAbility(1, "up")
     else player:executeAbility(1, "neutral") end
-
-  -- elseif key == "x" then
-  --   if     love.keyboard.isDown("up") then player:executeAbility(2, "up")
-  --   elseif love.keyboard.isDown("down") then player:executeAbility(2, "down")
-  --   elseif love.keyboard.isDown("left") then player:executeAbility(2, "side")
-  --   elseif love.keyboard.isDown("right") then player:executeAbility(2, "side")
-  --   else player:executeAbility(2, "neutral") end
-
-  -- elseif key == "c" then player:releaseAbility3()
-  --   if     love.keyboard.isDown("up") then player:executeAbility(3, "up")
-  --   elseif love.keyboard.isDown("down") then player:executeAbility(3, "down")
-  --   elseif love.keyboard.isDown("left") then player:executeAbility(3, "side")
-  --   elseif love.keyboard.isDown("right") then player:executeAbility(3, "side")
-  --   else player:executeAbility(3, "neutral") end
-
-  -- elseif key == "v" then player:releaseAbility4()
-  --   if     love.keyboard.isDown("up") then player:executeAbility(4, "up")
-  --   elseif love.keyboard.isDown("down") then player:executeAbility(4, "down")
-  --   elseif love.keyboard.isDown("left") then player:executeAbility(4, "side")
-  --   elseif love.keyboard.isDown("right") then player:executeAbility(4, "side")
-  --   else player:executeAbility(4, "neutral") end
 
   elseif key == "up" and notUsingAbility() then player:jump()
   end
