@@ -28,6 +28,11 @@ function Health:healHearts(hearts)
   signal.emit("character-hearts-restored", self, hearts)
 end
 
+
+
+------------------------------------
+-- DRAW
+------------------------------------
 function Health:drawHearts()
-  love.graphics.print(math.floor(self.currentDamage).."%", self.x, self.y - 16)
+  love.graphics.printf(math.floor(self.currentDamage).."%", self.x + self.w/2 - 150, self.y - 16, 300, "center")
 end

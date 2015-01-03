@@ -66,8 +66,8 @@ function SwordDown:handleCollisions()
           if col.other:typeOf("Enemy") then
             self.user.vy = 0
             self.user:applyImpulse(0, -25)
-            col.other:knockback(self.user, 0, 12)
             col.other:takeDamage(20)
+            col.other:knockback(0, 12)
           end
         end
       end

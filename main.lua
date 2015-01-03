@@ -19,6 +19,7 @@ vector    = require "lib/hump/vector"
 ------------------------------------
 require "mixins/corners"
 require "mixins/health"
+require "mixins/hitstun"
 
 
 -- Load Classes
@@ -57,8 +58,7 @@ function love.load()
   love.graphics.setBackgroundColor(81, 113, 155)
   love.graphics.setDefaultFilter("nearest", "nearest")
   love.math.setRandomSeed(os.time())
-
-  print(serialize.block(math))
+  love.graphics.setNewFont(16)
 
   -- Initialize Objects
   ------------------------------------

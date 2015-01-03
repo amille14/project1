@@ -64,11 +64,11 @@ function SwordNeutral:handleCollisions()
         if col.other:typeOf("Enemy") and not collider.collidedWith[col.other] then
           collider.collidedWith[col.other] = true
           self.user.vx = 0
-          local power = 18
-          if self.state == "charged" then power = self.chargeTime / 1000 * 16 + power end
-          if     self.user.direction == "right" then col.other:knockback(self.user, power, -power/4)
-          elseif self.user.direction == "left" then col.other:knockback(self.user, -power, -power/4) end
+          local power = 10
+          if self.state == "charged" then power = self.chargeTime / 1000 * 14 + power end
           col.other:takeDamage(power)
+          if     self.user.direction == "right" then col.other:knockback(power, -power/4)
+          elseif self.user.direction == "left" then col.other:knockback(-power, -power/4) end
         end
       end
     end

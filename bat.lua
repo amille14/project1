@@ -55,6 +55,16 @@ function Bat:handleCollisions()
         elseif col.normal.x ~= 0 then
           self.vx = self.vx * self.restitution
         end
+
+      -- Player Collision
+      elseif col.other:typeOf("Player") and not col.other.hitstunned then
+        local power = 18
+        col.other:hitstun(power * 20)
+        col.other:takeDamage(power)
+        if col.normal.y ~= 1 then
+          if self.direction == "right" then col.other:knockback(power, -power/4)
+          else col.other:knockback(-power, -power/4) end
+        end
       end
     end
   end

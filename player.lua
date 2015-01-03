@@ -4,9 +4,13 @@ require "physics_body"
 -- INITIALIZE PLAYER
 ------------------------------------
 Player = class("Player", PhysicsBody)
+Player:include(Health)
+Player:include(Hitstun)
 function Player:initialize(x, y)
-  PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 4.5, 140, 9.81 * 7, 0.5)
+  PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 4.5, 140, 9.81 * 7, -0.5)
   world:add(self, self.x, self.y, self.w, self.h)
+  self:resetHealth()
+  self:resetHitstun()
 
   self.state = "idle"
   self.direction = "right"
@@ -17,16 +21,12 @@ function Player:initialize(x, y)
   self.maxJumpTime = 80 -- in milliseconds
   self.jumpReleased = true
   self.canJump = true
-  self.jumpCount = 0
-
-  self.hitStunned = false
-  self.hitStunTime = 0
-  self.maxHitStunTime = 500 -- in milliseconds
 
   debugger.state = debug.add("state")
   debugger.vx = debug.add("vx")
   debugger.vy = debug.add("vy")
   debugger.ability = debug.add("ability")
+  debugger.damage = debug.add("damage")
 
 
   -- Spritesheets & Animations
@@ -194,12 +194,6 @@ end
 
 -- Keypress/Keyrelease Callbacks
 ------------------------------------
-
-function Player:releaseJump()
-  self.jumpReleased = true
-  if self.grounded then self.canJump = true end
-end
-
 function Player:jump()
   if self.canJump then
     self:applyImpulse(0, -7)
@@ -209,9 +203,13 @@ function Player:jump()
   end
 end
 
+function Player:releaseJump()
+  self.jumpReleased = true
+  if self.grounded then self.canJump = true end
+end
+
 function Player:executeAbility(slot, direction)
   if self.state ~= "ability" then
-    -- if not self.grounded and self.abilities[slot][direction.."-air"] ~= nil then direction = direction .. "-air" end
     if self.abilities[slot][direction] ~= nil then
       self.state = "ability"
       self.stateChanged = true
@@ -242,9 +240,15 @@ function Player:update (dt)
     self.abilityEnded = false
   end
 
-  if self.state ~= "ability" or (self.state == "ability" and self.currentAbility.canMove) then
+  -- Hitstun
+  if self.hitstunned then
+    self:updateHitstun(dt)
+
+  -- Movement
+  elseif self.state ~= "ability" or (self.state == "ability" and self.currentAbility.canMove) then
     self:move(dt)
   end
+
 
   -- Update Physics
   ------------------------------------
@@ -281,6 +285,7 @@ function Player:update (dt)
   else
     debug.update(debugger.ability, "none")
   end
+  debug.update(debugger.damage, self.currentDamage)
 end
 
 
@@ -327,7 +332,7 @@ function Player:handleCollisions()
         if col.normal.x == 0 and col.normal.y == -1 then
           self.vy = 0
           self:applyImpulse(0, -20)
-          col.other:knockback(self, 0, 8)
+          col.other:knockback(0, 8, true)
         end
       end
     end
@@ -355,6 +360,8 @@ function Player:draw ()
     ox = 16
   end
 
+  if self.hitstunned then love.graphics.setColor(255, 0, 0)
+  else love.graphics.setColor(255, 255, 255) end
   self.currentAnim:draw(self.x + drawOffset.x, self.y + drawOffset.y, 0, sx, sy, ox, oy)
 
 

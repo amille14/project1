@@ -30,8 +30,6 @@ function Ability:update(dt)
     self.chargeTime = self.chargeTime + dt * 1000
     if self.chargeTime >= self.maxChargeTime then self:release() end
   end
-
-  self.currentAnim:update(dt)
 end
 
 
