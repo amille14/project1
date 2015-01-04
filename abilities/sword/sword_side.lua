@@ -5,6 +5,9 @@ SwordSide = class("SwordNeutral", Ability)
 function SwordSide:initialize(user, endSignal, anims)
   Ability.initialize(self, user, endSignal, anims)
 
+  self.basePower = 10 
+  self.chargePower = 10
+
   self.colliders = {
     Collider:new("Ability", user.x + user.w - 16, user.y + 16, 58, 32)
   }
@@ -18,13 +21,10 @@ end
 function SwordSide:release()
   if self.state == "charging" then
     Ability.release(self)
+    self.user.vx = 0
     local force = 16
     if not self.user.grounded then force = force * (1 / self.user.mass) * 16 end
-    if self.user.direction == "right" then
-      self.user:applyImpulse(force, 0)
-    else
-      self.user:applyImpulse(-force, 0)
-    end
+    self.user:applyImpulse(dir[self.user.direction] * force, 0)
   end
 end
 
@@ -45,11 +45,8 @@ function SwordSide:update(dt)
     end
   end
 
-  if self.user.direction == "right" then
-    collider.x = self.user.x + self.user.w - 16
-  else
-    collider.x = self.user.x - collider.w + 16
-  end
+  if self.user.direction == "right" then collider.x = self.user.x + self.user.w - 16
+  else collider.x = self.user.x - collider.w + 16 end
   collider.y = self.user.y + 16
   collider:update(dt)
   self:handleCollisions()
@@ -82,14 +79,7 @@ function SwordSide:handleCollisions()
         if col.other:typeOf("Enemy") and not collider.collidedWith[col.other] then
           collider.collidedWith[col.other] = true
           self.user.vx = 0
-          local power = 10
-          if self.state == "charged" then power = self.chargeTime / 1000 * 10 + power end
-          col.other:takeDamage(power)
-          if self.user.direction == "right" then
-            col.other:knockback(power, 0)
-          elseif self.user.direction == "left" then
-            col.other:knockback(-power, 0)
-          end
+          col.other:launch(self:power(), 90 - 90 * dir[self.user.direction])
         end
       end
     end

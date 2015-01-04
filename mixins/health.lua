@@ -1,9 +1,9 @@
 Health = {}
 
-function Health:resetHealth(hearts, currentDamage, currentHeart)
+function Health:initializeHealth(hearts)
   self.heartCount = hearts or 1
   self.currentHeart = 0
-  self.currentDamage = currentDamage or 0
+  self.currentDamage = 0
   self.vulnerable = false
 end
 

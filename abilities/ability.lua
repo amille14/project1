@@ -13,6 +13,9 @@ function Ability:initialize(user, endSignal, anims)
   self.chargeTime = 0
   self.maxChargeTime = 1000 -- in milliseconds
   self.canMove = false
+  self.chargable = true
+  self.basePower = 1
+  self.chargePower = 0
 
   signal.register(endSignal, function(anim)
     anim:pauseAtEnd()
@@ -26,10 +29,12 @@ end
 -- UPDATE
 ------------------------------------
 function Ability:update(dt)
-  if self.state == "charging" then
+  if self.chargable and self.state == "charging" then
     self.chargeTime = self.chargeTime + dt * 1000
     if self.chargeTime >= self.maxChargeTime then self:release() end
   end
+
+  -- NOTE: The user's update method is responsible for updating the ability's animation.
 end
 
 
@@ -38,12 +43,14 @@ end
 -- OTHER METHODS
 ------------------------------------
 function Ability:execute()
-  self.state = "charging"
-  self.currentAnim = self.anims["charging"]
+  if self.chargable then 
+    self.state = "charging"
+    self.currentAnim = self.anims["charging"]
+  else self:release() end
 end
 
 function Ability:release()
-  if self.state == "charging" and self.chargeTime > 100 then
+  if self.chargable and self.state == "charging" and self.chargeTime > 100 then
     self.currentAnim = self.anims["charged"]
     self.state = "charged" 
   else
@@ -68,4 +75,10 @@ function Ability:reset()
   for k,v in pairs(self.colliders) do
     v:remove()
   end
+end
+
+function Ability:power()
+  local power = self.basePower
+  if self.chargable and self.state == "charged" then power = self.chargeTime / 1000 * self.chargePower + self.basePower end
+  return power
 end

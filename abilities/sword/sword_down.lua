@@ -6,6 +6,9 @@ function SwordDown:initialize(user, endSignal, anims)
   Ability.initialize(self, user, endSignal, anims)
 
   self.canMove = true
+  self.chargable = false
+  self.basePower = 14
+
   self.colliders = {
     Collider:new("Ability", self.user.x + 4, self.user.y + self.user.h - 16, 24, 36)
   }
@@ -20,7 +23,6 @@ end
 ------------------------------------
 function SwordDown:execute()
   Ability.execute(self)
-  Ability.release(self)
   self.user:applyImpulse(0, 10)
 end
 
@@ -66,8 +68,7 @@ function SwordDown:handleCollisions()
           if col.other:typeOf("Enemy") then
             self.user.vy = 0
             self.user:applyImpulse(0, -25)
-            col.other:takeDamage(20)
-            col.other:knockback(0, 12)
+            col.other:launch(self:power(), 270)
           end
         end
       end

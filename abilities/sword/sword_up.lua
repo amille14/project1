@@ -5,6 +5,9 @@ SwordUp = class("SwordUp", Ability)
 function SwordUp:initialize(user, endSignal, anims)
   Ability.initialize(self, user, endSignal, anims)
 
+  self.basePower = 10
+  self.chargePower = 10
+
   self.colliders = {
     Collider:new("Ability", user.x + user.w - 16, user.y - 8, 52, 32)
   }
@@ -26,11 +29,8 @@ function SwordUp:update(dt)
       collider.w = 52
       collider.h = 32
       collider.y = self.user.y - 8
-      if self.user.direction == "right" then
-        collider.x = self.user.x + self.user.w - 16
-      else
-        collider.x = self.user.x - collider.w + 16
-      end
+      if self.user.direction == "right" then collider.x = self.user.x + self.user.w - 16
+      else collider.x = self.user.x - collider.w + 16 end
       collider:add()
 
     -- Frame 4
@@ -45,22 +45,16 @@ function SwordUp:update(dt)
       collider.w = 48
       collider.h = self.user.h + 32
       collider.y = self.user.y - 48
-      if self.user.direction == "right" then
-        collider.x = self.user.x - collider.w + 16
-      else
-        collider.x = self.user.x + self.user.w - 16
-      end
+      if self.user.direction == "right" then collider.x = self.user.x - collider.w + 16
+      else collider.x = self.user.x + self.user.w - 16 end
     
     -- Frame 6
     elseif self.currentAnim.position == 6 then
       collider.w = 48
       collider.h = 32
       collider.y = self.user.y + 16
-      if self.user.direction == "right" then
-        collider.x = self.user.x - collider.w + 16
-      else
-        collider.x = self.user.x + self.user.w - 16
-      end
+      if self.user.direction == "right" then collider.x = self.user.x - collider.w + 16
+      else collider.x = self.user.x + self.user.w - 16 end
 
     -- Frame 7
     elseif self.currentAnim.position == 7 then
@@ -97,22 +91,10 @@ function SwordUp:handleCollisions()
         -- Enemy Collisions
         if col.other:typeOf("Enemy") and not collider.collidedWith[col.other] then
           collider.collidedWith[col.other] = true
-          -- self.user.vy = 0
-          local power = 10
-          if self.state == "charged" then power = self.chargeTime / 1000 * 10 + power end
-          local fy = -power
-          local fx = 0
-          if self.currentAnim.position == 3 then fx = -power/4
-          elseif self.currentAnim.position == 4 then fx = 0
-          elseif self.currentAnim.position == 5 then fx = power/4
-          elseif self.currentAnim.position == 6 then
-            fx = -power
-            fy = -power/4
-          end
-          if self.user.direction == "left" then fx = -fx end
-          
-          col.other:takeDamage(power)
-          col.other:knockback(fx, fy)
+          if     self.currentAnim.position == 3 then col.other:launch(self:power(), 90 - 30 * dir[self.user.direction])
+          elseif self.currentAnim.position == 4 then col.other:launch(self:power(), 90)
+          elseif self.currentAnim.position == 5 then col.other:launch(self:power(), 90 + 30 * dir[self.user.direction])
+          elseif self.currentAnim.position == 6 then col.other:launch(self:power(), 90 - 45 * dir[self.user.direction]) end
         end
       end
     end

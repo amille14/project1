@@ -66,11 +66,10 @@ function PhysicsBody:applyImpulse(ix, iy)
   self.vy = self.vy + iy
 end
 
-function PhysicsBody:knockback(fx, fy, ignoreDamage)
-  local multiplier = (40 / self.mass) * -self.restitution
-  if not ignoreDamage then
-    local damageMultiplier = (self.currentDamage / 100) + 1
-    multiplier = multiplier * damageMultiplier
-  end
-  self:applyImpulse(multiplier * fx, multiplier * fy)
+function PhysicsBody:knockback(power, angle, ignoreDamage)
+  local multiplier = 40.0 / self.mass
+  if not ignoreDamage then multiplier = multiplier * ((self.currentDamage / 100.0) + 1) end
+  local fx = power * math.cos(math.rad(angle)) * multiplier
+  local fy = -power * math.sin(math.rad(angle)) * multiplier
+  self:applyImpulse(fx, fy)
 end

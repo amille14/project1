@@ -1,18 +1,13 @@
-require "physics_body"
-
 ------------------------------------
 -- INITIALIZE BAT
 ------------------------------------
-Bat = class("Bat", PhysicsBody)
+Bat = class("Bat", Enemy)
 Bat:include(Health)
-function Bat:initialize(world, x, y)
-  PhysicsBody.initialize(self, x, y, 32, 32, 20, 0.4, 4.5, 140, 0, -0.5)
-  world:add(self, self.x, self.y, self.w, self.h)
-  self:resetHealth()
+Bat:include(Hitstun)
+function Bat:initialize(x, y)
+  Enemy.initialize(self, x, y, 32, 32, 20, 0.4, 4.5, 140, 0, -0.5)
 
   self.state = "flying"
-  self.direction = "right"
-
 
   -- Spritesheets & Animations
   -----------------------------------------------
@@ -28,8 +23,9 @@ function Bat:initialize(world, x, y)
 end
 
 function Bat:typeOf(type)
-  return type == "Enemy" or type == "Bat"
+  return type == "Bat" or Enemy.typeOf(self, type)
 end
+
 
 
 ------------------------------------
@@ -58,12 +54,12 @@ function Bat:handleCollisions()
 
       -- Player Collision
       elseif col.other:typeOf("Player") and not col.other.hitstunned then
-        local power = 18
-        col.other:hitstun(power * 20)
-        col.other:takeDamage(power)
+        local power = 20
+        col.other:hitstun(power * (col.other.currentDamage / 100 + 1))
+        col.other:takeDamage(power/2)
         if col.normal.y ~= 1 then
-          if self.direction == "right" then col.other:knockback(power, -power/4)
-          else col.other:knockback(-power, -power/4) end
+          if self.direction == "right" then col.other:knockback(power, 45)
+          else col.other:knockback(power, 135) end
         end
       end
     end
@@ -77,33 +73,15 @@ end
 ------------------------------------
 function Bat:update(dt)
 
-
-  -- Update Movement (Follow Player)
-  ------------------------------------
-  if distance(self.x, self.y, player.x, player.y) < 300 then
-    if self.x > player.x then
-      self.direction = "left"
-      self:applyImpulse(-0.3, 0)
-    else
-      self.direction = "right"
-      self:applyImpulse(0.3, 0)
-    end
-
-    if self.y > player.y then self:applyImpulse(0, -0.3)
-    else self:applyImpulse(0, 0.3) end
+  -- Movement (Follow Player)
+  if not self.hitstunned and distance(self.x, self.y, player.x, player.y) < 300 then
+    if self.x > player.x then self.direction = "left"
+    else self.direction = "right" end
+    if self.y > player.y then self:applyImpulse(dir[self.direction] * 0.3, -0.3)
+    else self:applyImpulse(dir[self.direction] * 0.3, 0.3) end
   end
 
-
-  -- Update Physics
-  ------------------------------------
-  self:updatePhysics(dt)
-  self:handleCollisions()
-
-
-  -- Update Animation
-  ------------------------------------
-  self.currentAnim = self.animations[self.state]
-  self.currentAnim:update(dt)
+  Enemy.update(self, dt)
 end
 
 
@@ -123,13 +101,14 @@ function Bat:draw()
       y = -32
     }
   }
-  if self.direction == "right" then
-    self.currentAnim.flippedH = true
-  elseif self.direction == "left" then
-    self.currentAnim.flippedH = false
-  end
 
-  love.graphics.setColor(255, 255, 255)
+  self.currentAnim.flippedH = self.direction == "right"
+
+  if self.hitstunned then
+    love.graphics.setColor(255, 0, 0)
+  else
+    love.graphics.setColor(255, 255, 255)
+  end
   self.currentAnim:draw(self.x + drawOffset[self.direction].x, self.y + drawOffset[self.direction].y, 0, sx, sy, ox, oy)
   self:drawHearts()
 

@@ -25,13 +25,15 @@ require "mixins/hitstun"
 -- Load Classes
 ------------------------------------
 require "collider"
+require "physics_body"
 require "abilities/ability"
 require "abilities/sword/sword_neutral"
 require "abilities/sword/sword_side"
 require "abilities/sword/sword_down"
 require "abilities/sword/sword_up"
-require "player"
 require "block"
+require "player"
+require "enemy"
 require "bat"
 
 
@@ -39,6 +41,7 @@ require "bat"
 ------------------------------------
 -- GLOBALS OBJECTS
 ------------------------------------
+dir = {["left"] = -1, ["right"] = 1}
 debug = Donut.init(5, 5)
 debugger = {
   fps = debug.add("FPS"),
@@ -64,7 +67,7 @@ function love.load()
   ------------------------------------
   player = Player:new(128, 128)
   cam = camera(player.x, player.y)
-  bats = { Bat:new(world, 640, 480), Bat:new(world, 380, 380), Bat:new(world, 280, 280) }
+  bats = { Bat:new(640, 480), Bat:new(380, 380), Bat:new(280, 280) }
 
   map = {
     blocks = {},

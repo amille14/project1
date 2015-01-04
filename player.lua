@@ -1,5 +1,3 @@
-require "physics_body"
-
 ------------------------------------
 -- INITIALIZE PLAYER
 ------------------------------------
@@ -7,10 +5,10 @@ Player = class("Player", PhysicsBody)
 Player:include(Health)
 Player:include(Hitstun)
 function Player:initialize(x, y)
-  PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 4.5, 140, 9.81 * 7, -0.5)
+  PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 4.5, 140, 9.81 * 8, -0.5)
   world:add(self, self.x, self.y, self.w, self.h)
-  self:resetHealth()
-  self:resetHitstun()
+  self:initializeHealth()
+  self:initializeHitstun()
 
   self.state = "idle"
   self.direction = "right"
@@ -226,7 +224,6 @@ function Player:releaseAbility()
 end
 
 
-
 ------------------------------------
 -- UPDATE
 ------------------------------------
@@ -350,11 +347,9 @@ function Player:draw ()
     x = -16,
     y = -16
   }
-  if self.direction == "right" then
-    self.currentAnim.flippedH = false
-  elseif self.direction == "left" then
-    self.currentAnim.flippedH = true
-  end
+
+  self.currentAnim.flippedH = self.direction == "left"
+
   if self.state == "ability" then
     if self.currentAbility == self.abilities[1]["up"] then oy = 16 end
     ox = 16

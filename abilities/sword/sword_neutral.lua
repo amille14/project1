@@ -5,6 +5,9 @@ SwordNeutral = class("SwordNeutral", Ability)
 function SwordNeutral:initialize(user, endSignal, anims)
   Ability.initialize(self, user, endSignal, anims)
 
+  self.basePower = 12
+  self.chargePower = 14
+
   self.colliders = {
     Collider:new("Ability", user.x + user.w - 16, user.y + 8, 52, user.h)
   }
@@ -27,11 +30,8 @@ function SwordNeutral:update(dt)
     end
   end
 
-  if self.user.direction == "right" then
-    collider.x = self.user.x + self.user.w - 16
-  else
-    collider.x = self.user.x - collider.w + 16
-  end
+  if self.user.direction == "right" then collider.x = self.user.x + self.user.w - 16
+  else collider.x = self.user.x - collider.w + 16 end
   collider.y = self.user.y + 8
   collider:update(dt)
   self:handleCollisions()
@@ -64,11 +64,7 @@ function SwordNeutral:handleCollisions()
         if col.other:typeOf("Enemy") and not collider.collidedWith[col.other] then
           collider.collidedWith[col.other] = true
           self.user.vx = 0
-          local power = 10
-          if self.state == "charged" then power = self.chargeTime / 1000 * 14 + power end
-          col.other:takeDamage(power)
-          if     self.user.direction == "right" then col.other:knockback(power, -power/4)
-          elseif self.user.direction == "left" then col.other:knockback(-power, -power/4) end
+          col.other:launch(self:power(), 90 - 70 * dir[self.user.direction])
         end
       end
     end
