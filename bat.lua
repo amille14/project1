@@ -5,7 +5,7 @@ Bat = class("Bat", Enemy)
 Bat:include(Health)
 Bat:include(Hitstun)
 function Bat:initialize(x, y)
-  Enemy.initialize(self, x, y, 32, 32, 20, 0.4, 4.5, 140, 0, -0.5)
+  Enemy.initialize(self, x, y, 32, 32, 20, 0.4, 4.5, 140, 9.81 * 8, -0.5)
 
   self.state = "flying"
 
@@ -55,12 +55,9 @@ function Bat:handleCollisions()
       -- Player Collision
       elseif col.other:typeOf("Player") and not col.other.hitstunned then
         local power = 20
-        col.other:hitstun(power * (col.other.currentDamage / 100 + 1))
-        col.other:takeDamage(power/2)
-        if col.normal.y ~= 1 then
-          if self.direction == "right" then col.other:knockback(power, 45)
-          else col.other:knockback(power, 135) end
-        end
+        col.other:hitstun(power * 10 * (col.other.currentDamage / 100 + 1))
+        col.other:takeDamage(power / 2)
+        if col.normal.y ~= 1 then col.other:knockback(power, 90 - 60 * dir[self.direction]) end
       end
     end
   end
@@ -74,12 +71,12 @@ end
 function Bat:update(dt)
 
   -- Movement (Follow Player)
-  if not self.hitstunned and distance(self.x, self.y, player.x, player.y) < 300 then
-    if self.x > player.x then self.direction = "left"
-    else self.direction = "right" end
-    if self.y > player.y then self:applyImpulse(dir[self.direction] * 0.3, -0.3)
-    else self:applyImpulse(dir[self.direction] * 0.3, 0.3) end
-  end
+  -- if not self.hitstunned and distance(self.x, self.y, player.x, player.y) < 300 then
+  --   if self.x > player.x then self.direction = "left"
+  --   else self.direction = "right" end
+  --   if self.y > player.y then self:applyImpulse(dir[self.direction] * 0.3, -0.3)
+  --   else self:applyImpulse(dir[self.direction] * 0.3, 0.3) end
+  -- end
 
   Enemy.update(self, dt)
 end

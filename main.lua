@@ -67,7 +67,7 @@ function love.load()
   ------------------------------------
   player = Player:new(128, 128)
   cam = camera(player.x, player.y)
-  bats = { Bat:new(640, 480), Bat:new(380, 380), Bat:new(280, 280) }
+  bats = { Bat:new(640, 480) } --{ Bat:new(640, 480), Bat:new(380, 380), Bat:new(280, 280) }
 
   map = {
     blocks = {},

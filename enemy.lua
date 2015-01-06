@@ -26,7 +26,7 @@ end
 function Enemy:launch(power, angle)
   self:takeDamage(power)
   self:hitstun(power * 10 * (self.currentDamage / 100 + 1))
-  self:knockback(power / 2, angle)
+  self:knockback(power, angle)
 end
 
 
