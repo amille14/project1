@@ -243,3 +243,20 @@ function getNewCamY(x1, y1, x2, y2, d)
     return y1 - vy * (magnitude - d)
   end
 end
+
+
+
+----------------------------------
+-- MATH STUFF
+----------------------------------
+function sign(x)
+  return x > 0 and 1 or x < 0 and -1 or 0
+end
+
+function round(val, decimal)
+  if (decimal) then
+    return math.floor( (val * 10^decimal) + 0.5) / (10^decimal)
+  else
+    return math.floor(val+0.5)
+  end
+end

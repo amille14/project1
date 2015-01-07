@@ -4,7 +4,7 @@
 Enemy = class("Enemy", PhysicsBody)
 Enemy:include(Health)
 Enemy:include(Hitstun)
-function Enemy:initialize(x, y, w, h, mass, friction, airDrag, speed, gravity, restitution)
+function Enemy:initialize(x, y, w, h, mass, friction, speed, gravity, restitution)
   PhysicsBody.initialize(self, x, y, w, h, mass, friction, airDrag, speed, gravity, restitution)
   world:add(self, self.x, self.y, self.w, self.h)
   self:initializeHealth()
@@ -45,6 +45,7 @@ function Enemy:update(dt)
   -- Update Physics
   ------------------------------------
   self:updatePhysics(dt)
+  self.grounded = false
   self:handleCollisions()
 
 

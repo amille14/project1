@@ -5,9 +5,10 @@ Bat = class("Bat", Enemy)
 Bat:include(Health)
 Bat:include(Hitstun)
 function Bat:initialize(x, y)
-  Enemy.initialize(self, x, y, 32, 32, 20, 0.4, 4.5, 140, 9.81 * 8, -0.5)
+  Enemy.initialize(self, x, y, 32, 32, 20, 0.4, 140, 9.81 * 8, -0.5)
 
   self.state = "flying"
+  self.currentDamage = 999
 
   -- Spritesheets & Animations
   -----------------------------------------------
@@ -46,7 +47,14 @@ function Bat:handleCollisions()
 
       -- Block Collision
       if col.other:typeOf("Block") then
-        if col.normal.y ~= 0 then
+        if col.normal.y == -1 then
+          if self.hitstunned then
+            self.vy = self.vy * self.restitution
+          else
+            self.grounded = true
+            self.vy = 0
+          end
+        elseif col.normal.y == 1 then
           self.vy = self.vy * self.restitution
         elseif col.normal.x ~= 0 then
           self.vx = self.vx * self.restitution
@@ -69,7 +77,6 @@ end
 -- UPDATE
 ------------------------------------
 function Bat:update(dt)
-
   -- Movement (Follow Player)
   -- if not self.hitstunned and distance(self.x, self.y, player.x, player.y) < 300 then
   --   if self.x > player.x then self.direction = "left"

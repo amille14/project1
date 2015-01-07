@@ -5,7 +5,7 @@ Player = class("Player", PhysicsBody)
 Player:include(Health)
 Player:include(Hitstun)
 function Player:initialize(x, y)
-  PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 4.5, 140, 9.81 * 8, -0.5)
+  PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 140, 9.81 * 8, -0.5)
   world:add(self, self.x, self.y, self.w, self.h)
   self:initializeHealth()
   self:initializeHitstun()
@@ -25,6 +25,7 @@ function Player:initialize(x, y)
   debugger.vy = debug.add("vy")
   debugger.ability = debug.add("ability")
   debugger.damage = debug.add("damage")
+  debugger.airDrag = debug.add("air drag")
 
 
   -- Spritesheets & Animations
@@ -283,6 +284,7 @@ function Player:update (dt)
     debug.update(debugger.ability, "none")
   end
   debug.update(debugger.damage, self.currentDamage)
+  debug.update(debugger.airDrag, self.airDrag)
 end
 
 
