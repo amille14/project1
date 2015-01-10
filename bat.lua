@@ -8,7 +8,6 @@ function Bat:initialize(x, y)
   Enemy.initialize(self, x, y, 32, 32, 20, 0.4, 140, 9.81 * 8, -0.5)
 
   self.state = "flying"
-  self.currentDamage = 999
 
   -- Spritesheets & Animations
   -----------------------------------------------
@@ -57,7 +56,9 @@ function Bat:handleCollisions()
         elseif col.normal.y == 1 then
           self.vy = self.vy * self.restitution
         elseif col.normal.x ~= 0 then
+          print("GOT HERE", self.vx, self.restitution)
           self.vx = self.vx * self.restitution
+          print("NEW: "..self.vx)
         end
 
       -- Player Collision

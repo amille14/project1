@@ -14,12 +14,12 @@ function PhysicsBody:initialize(x, y, w, h, mass, friction, speed, gravity, rest
   self.mass = mass or 1
   self.friction = friction or 0
   self.speed = speed or 100
-  self.airSpeed = self.speed * (1 / self.mass) * 8
+  self.airSpeed = self.speed * (1 / self.mass) * 4
   self.gravity = gravity or 9.81 * 8
   self.restitution = restitution or -1  -- "Bounciness", should be a number between 0 and -1
 
   local p = 1.293           -- air density
-  local C = 8               -- drag coefficient
+  local C = 32              -- drag coefficient
   local A = (w/64) * (h/64) -- area
   self.airDrag = 0.5 * p * C * A
 end
@@ -40,9 +40,6 @@ function PhysicsBody:updatePhysics(dt)
   end
 
   -- Air drag force
-  -- local Rx = 0
-  -- local Ry = 0
-
   local Rx = self.airDrag * self.vx * self.vx
   local Ry = self.airDrag * self.vy * self.vy
 
@@ -88,9 +85,9 @@ function PhysicsBody:updatePhysics(dt)
   local rvx = (Rx/self.mass) * dt   -- Change in x velocity as a result of air drag force
   local rvy = (Ry/self.mass) * dt   -- Change in y velocity as a result of air drag force
 
-  if self:typeOf("Bat") then
-    print(rvy, self.vy)
-  end
+  -- if self:typeOf("Bat") then
+  --   print(rvy, self.vy)
+  -- end
 
   -- self.vx = self.vx * (1 - math.min(rvx, 0.3))
   -- self.vy = self.vy * (1 - math.min(rvy, 0.3))
@@ -99,17 +96,16 @@ function PhysicsBody:updatePhysics(dt)
   -- end
 
 
-
-  -- if rvx > 0.5 then rvx = 0.5 end
+  -- FIX ME!!!!!!!
+  if rvx > math.abs(self.vx) * 0.5 then rvx = math.abs(self.vx) * 0.5 end
   local s = sign(self.vx)
   if s ~= 0 then
     self.vx = self.vx - (s * rvx)
     if sign(self.vx) ~= s then self.vx = 0 end
   end
 
-  -- if rvy > 0.5 then rvy = 0.5 end
+  if rvy > math.abs(self.vy) * 0.5 then rvy = math.abs(self.vy) * 0.5 end
   local s = sign(self.vy)
-  -- if self:typeOf("Bat") then print("Sign: "..s) end
   if s ~= 0 then
     self.vy = self.vy - (s * rvy)
     if sign(self.vy) ~= s then self.vy = 0 end

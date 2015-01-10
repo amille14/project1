@@ -10,7 +10,7 @@ function SwordDown:initialize(user, endSignal, anims)
   self.basePower = 14
 
   self.colliders = {
-    Collider:new("Ability", self.user.x + 4, self.user.y + self.user.h - 16, 24, 36)
+    Collider:new("Ability", self.user.x, self.user.y + self.user.h - 16, self.user.w, 36)
   }
 
   if self.user.grounded then self:finish() end
@@ -34,7 +34,7 @@ end
 function SwordDown:update(dt)
   local collider = self.colliders[1]
   if self.currentAnim.position == 2 then collider:add() end
-  collider.x = self.user.x + 4
+  collider.x = self.user.x
   collider.y = self.user.y + self.user.h - 16
   collider:update(dt)
   self:handleCollisions()
