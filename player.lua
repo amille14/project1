@@ -5,8 +5,10 @@ Player = class("Player", PhysicsBody)
 Player:include(Health)
 Player:include(Hitstun)
 function Player:initialize(x, y)
-  PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 140)
+  PhysicsBody.initialize(self, x, y, 32, 48, 60, 0.16, 0.01, 50, -0.3)
   world:add(self, self.x, self.y, self.w, self.h)
+  self.speed = 110
+  self.airSpeed = 10
   self:initializeHealth()
   self:initializeHitstun()
 
@@ -25,7 +27,7 @@ function Player:initialize(x, y)
   debugger.vy = debug.add("vy")
   debugger.ability = debug.add("ability")
   debugger.damage = debug.add("damage")
-  debugger.airDrag = debug.add("air drag")
+  -- debugger.airDrag = debug.add("air drag")
 
 
   -- Spritesheets & Animations
@@ -137,7 +139,8 @@ function Player:move(dt)
       self.canJump = true
 
     elseif not self.grounded and self.jumpTime > 0 and not self.jumpReleased then
-      self:applyImpulse(0, -6)
+      -- self:applyImpulse(0, -6)
+      self:applyForce(0, -10000)
       self.jumpTime = self.jumpTime - dt * 1000
     end
   end
@@ -153,12 +156,18 @@ function Player:move(dt)
       if self.state ~= "walking" then self.stateChanged = true end
       self.state = "walking"
     end
-    
+
     if self.grounded then
-      if self.vx < self.speed then self.vx = self.vx + self.speed * dt end
+      if self.vx < self.speed then self:setVelocity(self.vx + self.speed * dt, self.vy) end
     else
-      if self.vx < self.airSpeed then self.vx = self.vx + self.airSpeed * dt end
+      if self.vx < self.airSpeed then self:setVelocity(self.vx + self.airSpeed * dt, self.vy) end
     end
+    
+    -- if self.grounded then
+    --   if self.vx < self.speed then self.vx = self.vx + self.speed * dt end
+    -- else
+    --   if self.vx < self.airSpeed then self.vx = self.vx + self.airSpeed * dt end
+    -- end
 
   -- Walk Left
   elseif love.keyboard.isDown("left") then
@@ -167,12 +176,18 @@ function Player:move(dt)
       if self.state ~= "walking" then self.stateChanged = true end
       self.state = "walking"
     end
-    
+   
     if self.grounded then
-      if self.vx > -self.speed then self.vx = self.vx - self.speed * dt end
+      if self.vx > -self.speed then self:setVelocity(self.vx - self.speed * dt, self.vy) end
     else
-      if self.vx > -self.airSpeed then self.vx = self.vx - self.airSpeed * dt end
+      if self.vx > -self.airSpeed then self:setVelocity(self.vx - self.airSpeed * dt, self.vy) end
     end
+
+    -- if self.grounded then
+    --   if self.vx > -self.speed then self.vx = self.vx - self.speed * dt end
+    -- else
+    --   if self.vx > -self.airSpeed then self.vx = self.vx - self.airSpeed * dt end
+    -- end
 
   -- Idle
   elseif self.grounded then
@@ -195,7 +210,8 @@ end
 ------------------------------------
 function Player:jump()
   if self.canJump then
-    self:applyImpulse(0, -7)
+    -- self:applyImpulse(0, -7)
+    self:applyForce(0, -12000)
     self.grounded = false
     self.jumpReleased = false
     self.canJump = false
@@ -296,7 +312,7 @@ function Player:update (dt)
     debug.update(debugger.ability, "none")
   end
   debug.update(debugger.damage, self.currentDamage)
-  debug.update(debugger.airDrag, self.airDrag)
+  -- debug.update(debugger.airDrag, self.airDrag)
 end
 
 
@@ -331,10 +347,14 @@ function Player:handleCollisions()
         if col.normal.x == 0 and col.normal.y == -1 then
           if not self.grounded and self.jumpReleased and col.other:typeOf("Block") then player.canJump = true end
           self.grounded = true
-          self.vy = 0
+          -- self.vy = 0
+          self:setVelocity(self.vx, 0)
           self.jumpTime = self.maxJumpTime
         elseif col.normal.x == 0 and col.normal.y == 1 then
-          self.vy = self.vy * self.restitution -- This works because blocks have "infinite" mass. Change this if you add movable blocks with mass!
+          -- self.vy = self.vy * self.restitution -- This works because blocks have "infinite" mass. Change this if you add movable blocks with mass!
+          self:setVelocity(self.vx, self.vy * self.restitution)
+        elseif col.normal.x ~= 0 and col.normal.y == 0 then
+          self:setVelocity(self.vx * self.restitution, self.vy)
         end
       end
 
