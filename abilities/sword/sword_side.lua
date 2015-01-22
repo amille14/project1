@@ -21,10 +21,10 @@ end
 function SwordSide:release()
   if self.state == "charging" then
     Ability.release(self)
-    self.user.vx = 0
-    local force = 16
-    if not self.user.grounded then force = force * (1 / self.user.mass) * 16 end
-    self.user:applyImpulse(dir[self.user.direction] * force, 0)
+    self.user:setVelocityX(0)
+    local force = 30000
+    -- if not self.user.grounded then force = force * (1 / self.user.mass) * 16 end
+    self.user:applyForce(dir[self.user.direction] * force, 0)
   end
 end
 
@@ -78,7 +78,7 @@ function SwordSide:handleCollisions()
         -- Enemy Collisions
         if col.other:typeOf("Enemy") and not collider.collidedWith[col.other] then
           collider.collidedWith[col.other] = true
-          self.user.vx = 0
+          self.user:setVelocityX(0)
           col.other:launch(self:power(), 90 - 90 * dir[self.user.direction])
         end
       end

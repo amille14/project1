@@ -8,7 +8,7 @@ function Player:initialize(x, y)
   PhysicsBody.initialize(self, x, y, 32, 48, 60, 0.16, 0.01, 50, -0.3)
   world:add(self, self.x, self.y, self.w, self.h)
   self.speed = 110
-  self.airSpeed = 10
+  self.airSpeed = 12
   self:initializeHealth()
   self:initializeHitstun()
 
@@ -139,7 +139,6 @@ function Player:move(dt)
       self.canJump = true
 
     elseif not self.grounded and self.jumpTime > 0 and not self.jumpReleased then
-      -- self:applyImpulse(0, -6)
       self:applyForce(0, -10000)
       self.jumpTime = self.jumpTime - dt * 1000
     end
@@ -158,16 +157,10 @@ function Player:move(dt)
     end
 
     if self.grounded then
-      if self.vx < self.speed then self:setVelocity(self.vx + self.speed * dt, self.vy) end
+      if self.vx < self.speed then self:setVelocityX(self.vx + self.speed * dt) end
     else
-      if self.vx < self.airSpeed then self:setVelocity(self.vx + self.airSpeed * dt, self.vy) end
+      if self.vx < self.airSpeed then self:setVelocityX(self.vx + self.airSpeed * dt) end
     end
-    
-    -- if self.grounded then
-    --   if self.vx < self.speed then self.vx = self.vx + self.speed * dt end
-    -- else
-    --   if self.vx < self.airSpeed then self.vx = self.vx + self.airSpeed * dt end
-    -- end
 
   -- Walk Left
   elseif love.keyboard.isDown("left") then
@@ -178,16 +171,10 @@ function Player:move(dt)
     end
    
     if self.grounded then
-      if self.vx > -self.speed then self:setVelocity(self.vx - self.speed * dt, self.vy) end
+      if self.vx > -self.speed then self:setVelocityX(self.vx - self.speed * dt) end
     else
-      if self.vx > -self.airSpeed then self:setVelocity(self.vx - self.airSpeed * dt, self.vy) end
+      if self.vx > -self.airSpeed then self:setVelocityX(self.vx - self.airSpeed * dt) end
     end
-
-    -- if self.grounded then
-    --   if self.vx > -self.speed then self.vx = self.vx - self.speed * dt end
-    -- else
-    --   if self.vx > -self.airSpeed then self.vx = self.vx - self.airSpeed * dt end
-    -- end
 
   -- Idle
   elseif self.grounded then
@@ -197,7 +184,7 @@ function Player:move(dt)
 
   -- Jumping & Falling
   if not self.grounded and self.state ~= "ability" then
-    if self.vy < 6 then
+    if self.vy < 4 then
       self.state = "jumping"
     else
       self.state = "falling"
@@ -210,7 +197,6 @@ end
 ------------------------------------
 function Player:jump()
   if self.canJump then
-    -- self:applyImpulse(0, -7)
     self:applyForce(0, -12000)
     self.grounded = false
     self.jumpReleased = false
@@ -246,9 +232,8 @@ end
 -- OTHER METHODS
 ------------------------------------
 function Player:launch(power, angle)
-  self:takeDamage(power)
-  self:hitstun(power * (self.currentDamage / 100 + 1))
-  self:knockback(power * power/10, angle)
+  self:hitstun(power/1600 * (self.currentDamage / 100 + 1))
+  self:knockback(power, angle)
 end
 
 
@@ -312,7 +297,6 @@ function Player:update (dt)
     debug.update(debugger.ability, "none")
   end
   debug.update(debugger.damage, self.currentDamage)
-  -- debug.update(debugger.airDrag, self.airDrag)
 end
 
 
@@ -347,23 +331,21 @@ function Player:handleCollisions()
         if col.normal.x == 0 and col.normal.y == -1 then
           if not self.grounded and self.jumpReleased and col.other:typeOf("Block") then player.canJump = true end
           self.grounded = true
-          -- self.vy = 0
-          self:setVelocity(self.vx, 0)
+          self:setVelocityY(0)
           self.jumpTime = self.maxJumpTime
         elseif col.normal.x == 0 and col.normal.y == 1 then
-          -- self.vy = self.vy * self.restitution -- This works because blocks have "infinite" mass. Change this if you add movable blocks with mass!
-          self:setVelocity(self.vx, self.vy * self.restitution)
+          self:setVelocityY(self.vy * self.restitution)
         elseif col.normal.x ~= 0 and col.normal.y == 0 then
-          self:setVelocity(self.vx * self.restitution, self.vy)
+          self:setVelocityX(self.vx * self.restitution)
         end
       end
 
       -- Enemy Collisions
       if col.other:typeOf("Enemy") then
         if col.normal.x == 0 and col.normal.y == -1 then
-          self.vy = 0
-          self:applyImpulse(0, -20)
-          col.other:knockback(0, 8, true)
+          self:setVelocityY(0)
+          self:applyForce(0, -40000)
+          col.other:knockback(0, 14000, true)
         end
       end
     end

@@ -19,7 +19,7 @@ function PhysicsBody:initialize(x, y, w, h, mass, friction, frictionAir, gravity
   self.frictionAir = frictionAir or 0.01
   -- self.speed = speed or 100
   -- self.airSpeed = self.speed * (1 / self.mass) * 4
-  self.gravity = gravity or 40
+  self.gravity = gravity or 50
   self.gravityForce = self.gravity * self.mass
   self.restitution = restitution or -0.5  -- "Bounciness", should be a number between 0 and -1
   self.fx = 0
@@ -113,9 +113,27 @@ function PhysicsBody:setVelocity(vx, vy)
   self.vy = vy
 end
 
+function PhysicsBody:setVelocityX(vx)
+  self.xPrev = self.x - vx
+  self.vx = vx
+end
+
+function PhysicsBody:setVelocityY(vy)
+  self.yPrev = self.y - vy
+  self.vy = vy
+end
+
 function PhysicsBody:applyForce(fx, fy)
   self.fx = self.fx + fx
   self.fy = self.fy + fy
+end
+
+function PhysicsBody:knockback(force, angle, ignoreDamage)
+  local multiplier = 1
+  if not ignoreDamage then multiplier = (self.currentDamage / 100.0 * 0.4) + 1 end
+  local fx = round(power * math.cos(math.rad(angle)) * multiplier, 8)
+  local fy = round(-power * math.sin(math.rad(angle)) * multiplier, 8)
+  self:applyForce(fx, fy)
 end
 
 

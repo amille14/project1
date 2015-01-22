@@ -23,7 +23,7 @@ end
 ------------------------------------
 function SwordDown:execute()
   Ability.execute(self)
-  self.user:applyImpulse(0, 10)
+  self.user:applyForce(0, 18000)
 end
 
 
@@ -66,8 +66,8 @@ function SwordDown:handleCollisions()
 
           -- Enemy Collisions
           if col.other:typeOf("Enemy") then
-            self.user.vy = 0
-            self.user:applyImpulse(0, -25)
+            self.user:setVelocityY(0)
+            self.user:applyForce(0, -40000)
             col.other:launch(self:power(), 270)
           end
         end
