@@ -5,7 +5,7 @@ Player = class("Player", PhysicsBody)
 Player:include(Health)
 Player:include(Hitstun)
 function Player:initialize(x, y)
-  PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 140, 9.81 * 8, -0.5)
+  PhysicsBody.initialize(self, x, y, 32, 48, 40, 0.4, 140)
   world:add(self, self.x, self.y, self.w, self.h)
   self:initializeHealth()
   self:initializeHitstun()
@@ -223,6 +223,18 @@ function Player:releaseAbility()
     self.currentAbility:release()
   end
 end
+
+
+
+------------------------------------
+-- OTHER METHODS
+------------------------------------
+function Player:launch(power, angle)
+  self:takeDamage(power)
+  self:hitstun(power * (self.currentDamage / 100 + 1))
+  self:knockback(power * power/10, angle)
+end
+
 
 
 ------------------------------------
