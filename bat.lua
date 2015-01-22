@@ -5,10 +5,11 @@ Bat = class("Bat", Enemy)
 Bat:include(Health)
 Bat:include(Hitstun)
 function Bat:initialize(x, y)
-  Enemy.initialize(self, x, y, 32, 32, 20, 0.4, 140, 0, -0.5)
+  Enemy.initialize(self, x, y, 32, 32, 30, 0.1, 0.01, 0)
 
   self.state = "flying"
   self.power = 10
+  self.speed = 14
 
   -- Spritesheets & Animations
   -----------------------------------------------
@@ -49,15 +50,15 @@ function Bat:handleCollisions()
       if col.other:typeOf("Block") then
         if col.normal.y == -1 then
           if self.hitstunned then
-            self.vy = self.vy * self.restitution
+            self:setVelocityY(self.vy * self.restitution)
           else
             self.grounded = true
-            self.vy = 0
+            self:setVelocityY(0)
           end
         elseif col.normal.y == 1 then
-          self.vy = self.vy * self.restitution
+          self:setVelocityY(self.vy * self.restitution)
         elseif col.normal.x ~= 0 then
-          self.vx = self.vx * self.restitution
+          self:setVelocityX(self.vx * self.restitution)
         end
 
       -- Player Collision
@@ -82,11 +83,13 @@ function Bat:update(dt)
     self.gravity = 0
     if self.x > player.x then self.direction = "left"
     else self.direction = "right" end
-    if self.y > player.y then self:applyImpulse(dir[self.direction] * 0.2, -0.2)
-    else self:applyImpulse(dir[self.direction] * 0.2, 0.2) end
+
+    local angle = angleBetween(self.x, self.y, player.x, player.y)
+    local speed = self.speed * dt
+    self:applyImpulse(math.cos(angle) * speed, math.sin(angle) * speed)
   end
 
-  if self.hitstunned then self.gravity = 78 end
+  if self.hitstunned then self.gravity = 50 end
 
   Enemy.update(self, dt)
 end

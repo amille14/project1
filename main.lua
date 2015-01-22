@@ -67,7 +67,7 @@ function love.load()
   ------------------------------------
   player = Player:new(128, 128)
   cam = camera(player.x, player.y)
-  -- bats = { Bat:new(640, 480) } --{ Bat:new(640, 480), Bat:new(380, 380), Bat:new(280, 280) }
+  bats = { Bat:new(640, 480), Bat:new(380, 380), Bat:new(280, 280) }
 
   map = {
     blocks = {},
@@ -131,9 +131,9 @@ end
 ------------------------------------
 function love.update(dt)
   player:update(dt)
-  -- for i, bat in ipairs(bats) do
-  --   bat:update(dt)
-  -- end
+  for i, bat in ipairs(bats) do
+    bat:update(dt)
+  end
 
 
   -- Update Camera
@@ -171,9 +171,9 @@ function love.draw()
   -- Draw Player & Objects
   ------------------------------------
   love.graphics.setColor(255, 255, 255)
-  -- for i, bat in ipairs(bats) do
-  --   bat:draw()
-  -- end
+  for i, bat in ipairs(bats) do
+    bat:draw()
+  end
   love.graphics.setColor(255, 255, 255)
   player:draw()
 
@@ -202,6 +202,10 @@ end
 
 function distance(x1, y1, x2, y2)
   return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
+end
+
+function angleBetween(x1, y1, x2, y2)
+  return math.atan2(y2 - y1, x2 - x1)
 end
 
 

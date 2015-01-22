@@ -7,8 +7,6 @@ Player:include(Hitstun)
 function Player:initialize(x, y)
   PhysicsBody.initialize(self, x, y, 32, 48, 60, 0.16, 0.01, 50, -0.3)
   world:add(self, self.x, self.y, self.w, self.h)
-  self.speed = 110
-  self.airSpeed = 12
   self:initializeHealth()
   self:initializeHitstun()
 
@@ -16,6 +14,9 @@ function Player:initialize(x, y)
   self.direction = "right"
   self.stateChanged = false
   self.abilityEnded = false
+
+  self.speed = 110
+  self.airSpeed = 12
 
   self.jumpTime = 0
   self.maxJumpTime = 80 -- in milliseconds
@@ -27,7 +28,6 @@ function Player:initialize(x, y)
   debugger.vy = debug.add("vy")
   debugger.ability = debug.add("ability")
   debugger.damage = debug.add("damage")
-  -- debugger.airDrag = debug.add("air drag")
 
 
   -- Spritesheets & Animations
@@ -197,6 +197,7 @@ end
 ------------------------------------
 function Player:jump()
   if self.canJump then
+    self:setVelocityY(0)
     self:applyForce(0, -12000)
     self.grounded = false
     self.jumpReleased = false
@@ -232,8 +233,9 @@ end
 -- OTHER METHODS
 ------------------------------------
 function Player:launch(power, angle)
-  self:hitstun(power/1600 * (self.currentDamage / 100 + 1))
-  self:knockback(power, angle)
+  self:takeDamage(power)
+  self:hitstun(power * (self.currentDamage / 100 + 1))
+  self:knockback(power * 1600, angle)
 end
 
 

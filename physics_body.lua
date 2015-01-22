@@ -128,11 +128,15 @@ function PhysicsBody:applyForce(fx, fy)
   self.fy = self.fy + fy
 end
 
+function PhysicsBody:applyImpulse(vx, vy)
+  self:setVelocity(self.vx + vx, self.vy + vy)
+end
+
 function PhysicsBody:knockback(force, angle, ignoreDamage)
   local multiplier = 1
   if not ignoreDamage then multiplier = (self.currentDamage / 100.0 * 0.4) + 1 end
-  local fx = round(power * math.cos(math.rad(angle)) * multiplier, 8)
-  local fy = round(-power * math.sin(math.rad(angle)) * multiplier, 8)
+  local fx = round(force * math.cos(math.rad(angle)) * multiplier, 8)
+  local fy = round(-force * math.sin(math.rad(angle)) * multiplier, 8)
   self:applyForce(fx, fy)
 end
 
