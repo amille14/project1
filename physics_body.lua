@@ -45,6 +45,8 @@ function PhysicsBody:updatePhysics(dt)
 
   self.vx = (vxPrev * frictionAir * friction) + (self.fx / self.mass) * dtSquared * 64
   self.vy = (vyPrev * frictionAir) + (self.fy / self.mass) * dtSquared * 64
+  if math.abs(self.vx) < 0.0001 then self.vx = 0 end
+  if math.abs(self.vy) < 0.0001 then self.vy = 0 end
   self.xPrev = self.x
   self.yPrev = self.y
   self.x = self.x + self.vx
