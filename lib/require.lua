@@ -19,7 +19,7 @@ function require.tree(requirePath)
     local result = {}
 
     local fsPath = toFSPath(requirePath)
-    local entries = lfs.enumerate(fsPath)
+    local entries = lfs.getDirectoryItems(fsPath)
 
     for _,entry in ipairs(entries) do
       fsPath = toFSPath(requirePath .. '.' .. entry)
