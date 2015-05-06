@@ -1,12 +1,12 @@
 -- Libraries
 require("lib/require")
 require.tree("lib/lovetoys")
-serialize = require "serialize"
-flux      = require "flux"
+serialize = require "lib/serpent"
+flux      = require "lib/flux"
 camera    = require "lib/hump/camera"
 anim8     = require "lib/anim8"
-bump      = require "bump"
-debug     = require "donut"
+bump      = require "lib/bump"
+debug     = require "lib/donut"
 
 -- Utility
 require "utility"
